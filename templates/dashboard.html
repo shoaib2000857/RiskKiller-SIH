@@ -1,0 +1,1061 @@
+{% set title = "LLM MalignOps Shield" %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.4/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      ::selection {
+        background: rgba(16, 185, 129, 0.35);
+        color: #0f172a;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div class="relative isolate overflow-hidden border-b border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950">
+      <div class="absolute -left-32 top-10 h-72 w-72 rounded-full bg-emerald-500/40 blur-3xl opacity-40"></div>
+      <div class="absolute -right-32 bottom-[-6rem] h-96 w-96 rounded-full bg-cyan-500/30 blur-[120px] opacity-70"></div>
+      <header class="relative z-10 max-w-7xl mx-auto px-6 py-12">
+        <div class="flex flex-col gap-10">
+          <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <div class="space-y-4 max-w-3xl">
+              <p class="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-emerald-300">
+                LLM MalignOps Shield
+              </p>
+              <h1 class="text-4xl md:text-5xl font-semibold leading-tight text-white">
+                Proactive tradecraft dashboard for <span class="text-emerald-300">malign influence</span> detection.
+              </h1>
+              <p class="text-base md:text-lg text-slate-300">
+                Stream intakes, score narratives, and assemble shareable intelligence packages directly from the API you
+                built. This dashboard keeps analysts in flow while showing the system's full surface area.
+              </p>
+            </div>
+            <div class="space-y-4 text-sm text-right text-slate-300">
+              <div>
+                <p class="text-xs uppercase tracking-[0.32em] text-emerald-300">Environment</p>
+                <p class="mt-1 font-mono text-base">
+                  {{ request.app.state.env if request and request.app and request.app.state and request.app.state.env else "sandbox" }}
+                </p>
+              </div>
+              <div>
+                <p class="text-xs uppercase tracking-[0.32em] text-slate-400">API Endpoint</p>
+                <p class="mt-1 font-mono text-xs text-slate-400/80">/api/v1/intake · /api/v1/cases/:id · /api/v1/share</p>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <article class="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-lg shadow-emerald-500/10 backdrop-blur">
+              <p class="text-xs uppercase tracking-widest text-emerald-200/70">Analyses Run</p>
+              <p id="metric-total" class="mt-2 text-3xl font-semibold text-white">0</p>
+            </article>
+            <article class="rounded-2xl border border-white/10 bg-slate-900/60 px-5 py-4 shadow-lg shadow-cyan-500/10 backdrop-blur">
+              <p class="text-xs uppercase tracking-widest text-slate-300">High Risk Flags</p>
+              <p id="metric-high-risk" class="mt-2 text-3xl font-semibold text-rose-200">0</p>
+            </article>
+            <article class="rounded-2xl border border-white/10 bg-slate-900/60 px-5 py-4 shadow-lg shadow-fuchsia-500/10 backdrop-blur">
+              <p class="text-xs uppercase tracking-widest text-slate-300">Average Score</p>
+              <p id="metric-average" class="mt-2 text-3xl font-semibold text-amber-200">0%</p>
+            </article>
+            <article class="rounded-2xl border border-white/10 bg-slate-900/60 px-5 py-4 shadow-lg shadow-slate-900/40 backdrop-blur">
+              <p class="text-xs uppercase tracking-widest text-slate-300">Last Activity</p>
+              <p id="metric-last-updated" class="mt-2 text-lg font-medium text-slate-200">—</p>
+            </article>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-6 py-12 space-y-10">
+      <div class="grid grid-cols-1 xl:grid-cols-[1.7fr_1fr] gap-8">
+        <section class="rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-2xl shadow-black/40 backdrop-blur">
+          <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-semibold text-white">Submit narrative for detection</h2>
+              <p class="mt-1 text-sm text-slate-400">Paste flagged content, enrich with context, and watch the pipeline respond in real-time.</p>
+            </div>
+            <div class="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1 text-xs font-medium text-slate-300">
+              Latency target &lt; 3s
+            </div>
+          </header>
+          <form id="intake-form" class="mt-6 space-y-6">
+            <div>
+              <label for="input-text" class="text-sm font-medium text-slate-200">Narrative payload</label>
+              <textarea
+                id="input-text"
+                name="text"
+                rows="6"
+                required
+                placeholder="Paste suspect content or hostile call-to-action..."
+                class="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              ></textarea>
+              <p class="mt-2 text-xs text-slate-500">The orchestrator will run heuristics, watermark checks, and graph ingestion automatically.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div class="space-y-2">
+                <label for="input-language" class="text-xs uppercase tracking-wide text-slate-400">Language</label>
+                <input
+                  id="input-language"
+                  name="language"
+                  value="en"
+                  class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="input-source" class="text-xs uppercase tracking-wide text-slate-400">Source channel</label>
+                <input
+                  id="input-source"
+                  name="source"
+                  placeholder="e.g. darknet, social-feed"
+                  class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="input-tags" class="text-xs uppercase tracking-wide text-slate-400">Analyst tags</label>
+                <input
+                  id="input-tags"
+                  name="tags"
+                  placeholder="disinfo, amplification"
+                  class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div class="space-y-2 md:col-span-1">
+                <label for="input-platform" class="text-xs uppercase tracking-wide text-slate-400">Platform</label>
+                <input
+                  id="input-platform"
+                  name="platform"
+                  placeholder="telegram, state-media"
+                  class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="input-region" class="text-xs uppercase tracking-wide text-slate-400">Region</label>
+                <input
+                  id="input-region"
+                  name="region"
+                  placeholder="Geo focus (optional)"
+                  class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </div>
+              <div class="space-y-2">
+                <label for="input-actor" class="text-xs uppercase tracking-wide text-slate-400">Actor ID</label>
+                <input
+                  id="input-actor"
+                  name="actor_id"
+                  placeholder="Suspected cell"
+                  class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex items-center gap-2 text-xs text-slate-400">
+                <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Pipeline orchestration online
+              </div>
+              <button
+                id="submit-button"
+                type="submit"
+                class="inline-flex items-center gap-2 rounded-full bg-emerald-400/90 px-6 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              >
+                <span>Analyse narrative</span>
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M4.167 10h11.666M10 4.167 15.833 10 10 15.833"
+                    stroke="#0f172a"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-xl shadow-black/40 backdrop-blur">
+          <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-semibold text-white">Live fusion feed</h2>
+              <p class="mt-1 text-sm text-slate-400">Direct stream from <span class="font-mono text-emerald-300">/api/v1/events/stream</span>.</p>
+            </div>
+            <div class="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-xs text-slate-300">
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300"></span>
+              </span>
+              Streaming
+            </div>
+          </header>
+          <div id="event-log" class="mt-6 space-y-3 max-h-[30rem] overflow-y-auto pr-1">
+            <div id="event-empty" class="rounded-2xl border border-dashed border-white/10 bg-slate-900/60 px-4 py-8 text-center text-sm text-slate-500">
+              Awaiting signals… submit content or hook into the pipeline to populate the activity stream.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-8">
+        <section class="rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-2xl shadow-black/40 backdrop-blur">
+          <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <h2 class="text-2xl font-semibold text-white">Session analyses</h2>
+              <p class="mt-1 text-sm text-slate-400">Every intake processed while this dashboard is open. Click a row to inspect the full breakdown.</p>
+            </div>
+          </header>
+          <div class="mt-6 overflow-hidden rounded-2xl border border-white/5">
+            <table class="min-w-full divide-y divide-white/5 text-sm">
+              <thead class="bg-slate-950/80 text-xs uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium">Intake ID</th>
+                  <th class="px-4 py-3 text-left font-medium">Classification</th>
+                  <th class="px-4 py-3 text-left font-medium">Composite</th>
+                  <th class="px-4 py-3 text-left font-medium">Created</th>
+                </tr>
+              </thead>
+              <tbody id="results-body" class="divide-y divide-white/5 bg-slate-950/40">
+                <tr id="results-placeholder">
+                  <td colspan="4" class="px-4 py-6 text-center text-sm text-slate-500">
+                    No intakes analysed yet. Submit a narrative to light up the table.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="rounded-3xl border border-white/5 bg-slate-900/80 p-8 shadow-2xl shadow-black/50 backdrop-blur">
+          <header class="flex flex-col gap-2">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-2xl font-semibold text-white">Case intelligence</h2>
+              <span id="selected-risk-badge" class="hidden rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200"></span>
+            </div>
+            <p class="text-sm text-slate-400">Select a case to surface composite scoring, heuristics, provenance, and network context.</p>
+          </header>
+          <div id="detail-empty" class="mt-8 rounded-2xl border border-dashed border-white/10 bg-slate-900/60 px-5 py-12 text-center text-sm text-slate-500">
+            Waiting for a selection. Choose an intake from the table to populate this panel.
+          </div>
+          <div id="detail-panel" class="mt-8 hidden space-y-8">
+            <section class="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-slate-400">Intake ID</p>
+                  <p id="selected-case-label" class="mt-1 font-mono text-sm text-emerald-200" title=""></p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs uppercase tracking-wide text-slate-400">Composite score</p>
+                  <p id="selected-score" class="mt-1 text-3xl font-semibold text-emerald-300">—</p>
+                </div>
+              </div>
+              <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-slate-400">Submitted</p>
+                  <p id="selected-submitted" class="mt-1 text-slate-200">—</p>
+                </div>
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-slate-400">Graph risk actors</p>
+                  <p id="selected-actors" class="mt-1 text-slate-200">—</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="space-y-4">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Signal breakdown</h3>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>Linguistic confidence</span>
+                    <span id="score-linguistic">n/a</span>
+                  </div>
+                  <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div class="h-full rounded-full bg-emerald-400 transition-all duration-300" data-breakdown="linguistic_score" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>Behavioral risk</span>
+                    <span id="score-behavioral">n/a</span>
+                  </div>
+                  <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div class="h-full rounded-full bg-amber-400 transition-all duration-300" data-breakdown="behavioral_score" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>Hugging Face probability</span>
+                    <span id="score-hf">n/a</span>
+                  </div>
+                  <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div class="h-full rounded-full bg-cyan-400 transition-all duration-300" data-breakdown="hf_probability" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>Ollama qualitative risk</span>
+                    <span id="score-ollama">n/a</span>
+                  </div>
+                  <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div class="h-full rounded-full bg-fuchsia-400 transition-all duration-300" data-breakdown="ollama_risk" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Stylometric anomalies</h3>
+              <ul id="stylometric-list" class="mt-4 space-y-2 text-sm text-slate-200"></ul>
+            </section>
+
+            <section>
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Triggered heuristics</h3>
+              <ul id="heuristics-list" class="mt-3 grid grid-cols-1 gap-2 text-sm text-emerald-200"></ul>
+            </section>
+
+            <section class="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Provenance checks</h3>
+              <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                <div id="provenance-watermark" class="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200"></div>
+                <div id="provenance-signature" class="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200"></div>
+              </div>
+              <ul id="provenance-notes" class="mt-4 space-y-1 text-xs text-slate-400"></ul>
+            </section>
+
+            <section class="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Graph intelligence snapshot</h3>
+              <div id="graph-stats" class="mt-4 grid grid-cols-3 gap-3 text-center text-sm text-slate-200"></div>
+              <div id="graph-communities" class="mt-4 space-y-2 text-xs text-slate-400"></div>
+            </section>
+
+            <section class="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
+              <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Submitted payload</h3>
+              <div class="mt-4 space-y-3 text-sm text-slate-200">
+                <p id="submitted-text" class="rounded-xl border border-white/5 bg-slate-900/60 px-4 py-3 text-slate-100"></p>
+                <div id="submitted-meta" class="grid grid-cols-2 gap-3 text-xs text-slate-300"></div>
+                <div id="submitted-tags" class="flex flex-wrap gap-2 text-xs text-emerald-200"></div>
+              </div>
+            </section>
+
+            <section class="space-y-4">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Generate sharing package</h3>
+                <p class="mt-1 text-xs text-slate-400">Wrap the analysis into a signed package for partner dissemination directly through the API.</p>
+              </div>
+              <form id="share-form" class="space-y-4">
+                <div class="grid grid-cols-1 gap-4 text-sm">
+                  <label class="flex flex-col gap-2 text-slate-200">
+                    <span class="text-xs uppercase tracking-wide text-slate-400">Destination</span>
+                    <select
+                      id="share-destination"
+                      name="destination"
+                      class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    >
+                      <option value="USA">USA</option>
+                      <option value="EU">EU</option>
+                      <option value="IN">IN</option>
+                      <option value="AUS">AUS</option>
+                      <option value="FiveEyes">FiveEyes</option>
+                    </select>
+                  </label>
+                  <label class="flex flex-col gap-2 text-slate-200">
+                    <span class="text-xs uppercase tracking-wide text-slate-400">Justification</span>
+                    <textarea
+                      id="share-justification"
+                      name="justification"
+                      rows="2"
+                      placeholder="Operational coordination request..."
+                      class="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    >Trusted cell requesting rapid alerting on hostile narrative.</textarea>
+                  </label>
+                  <label class="inline-flex items-center gap-3 text-xs text-slate-300">
+                    <input
+                      id="share-include"
+                      name="include_personal_data"
+                      type="checkbox"
+                      class="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-400 focus:ring-emerald-500"
+                    />
+                    Include personally identifiable metadata
+                  </label>
+                </div>
+                <button
+                  id="share-button"
+                  type="submit"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                >
+                  Build package
+                </button>
+              </form>
+              <pre
+                id="share-output"
+                class="hidden max-h-48 overflow-y-auto rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-xs text-slate-300"
+              ></pre>
+            </section>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <div
+      id="toast"
+      class="pointer-events-none fixed bottom-6 right-6 hidden max-w-sm rounded-2xl border border-white/10 bg-emerald-500 px-4 py-3 text-sm font-medium text-slate-900 shadow-2xl shadow-emerald-500/30"
+    ></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const state = {
+          results: [],
+          selectedId: null,
+        };
+
+        const submissionCache = new Map();
+
+        const selectors = {
+          total: document.getElementById("metric-total"),
+          highRisk: document.getElementById("metric-high-risk"),
+          average: document.getElementById("metric-average"),
+          lastUpdated: document.getElementById("metric-last-updated"),
+          resultsBody: document.getElementById("results-body"),
+          resultsPlaceholder: document.getElementById("results-placeholder"),
+          eventLog: document.getElementById("event-log"),
+          eventEmpty: document.getElementById("event-empty"),
+          detailEmpty: document.getElementById("detail-empty"),
+          detailPanel: document.getElementById("detail-panel"),
+          selectedCase: document.getElementById("selected-case-label"),
+          selectedScore: document.getElementById("selected-score"),
+          selectedSubmitted: document.getElementById("selected-submitted"),
+          selectedActors: document.getElementById("selected-actors"),
+          riskBadge: document.getElementById("selected-risk-badge"),
+          heuristicsList: document.getElementById("heuristics-list"),
+          stylometricList: document.getElementById("stylometric-list"),
+          provenanceWatermark: document.getElementById("provenance-watermark"),
+          provenanceSignature: document.getElementById("provenance-signature"),
+          provenanceNotes: document.getElementById("provenance-notes"),
+          graphStats: document.getElementById("graph-stats"),
+          graphCommunities: document.getElementById("graph-communities"),
+          submittedText: document.getElementById("submitted-text"),
+          submittedMeta: document.getElementById("submitted-meta"),
+          submittedTags: document.getElementById("submitted-tags"),
+          shareOutput: document.getElementById("share-output"),
+          toast: document.getElementById("toast"),
+          scoreBars: {
+            linguistic_score: document.querySelector('[data-breakdown="linguistic_score"]'),
+            behavioral_score: document.querySelector('[data-breakdown="behavioral_score"]'),
+            hf_probability: document.querySelector('[data-breakdown="hf_probability"]'),
+            ollama_risk: document.querySelector('[data-breakdown="ollama_risk"]'),
+          },
+          scoreLabels: {
+            linguistic_score: document.getElementById("score-linguistic"),
+            behavioral_score: document.getElementById("score-behavioral"),
+            hf_probability: document.getElementById("score-hf"),
+            ollama_risk: document.getElementById("score-ollama"),
+          },
+          intakeForm: document.getElementById("intake-form"),
+          submitButton: document.getElementById("submit-button"),
+          shareForm: document.getElementById("share-form"),
+          shareButton: document.getElementById("share-button"),
+        };
+
+        const classificationStyles = {
+          "high-risk": "border-rose-500/40 bg-rose-500/15 text-rose-100",
+          "medium-risk": "border-amber-500/40 bg-amber-500/15 text-amber-100",
+          "low-risk": "border-emerald-500/40 bg-emerald-500/15 text-emerald-100",
+        };
+
+        function formatPercent(value) {
+          if (typeof value !== "number" || Number.isNaN(value)) return "n/a";
+          return Math.round(value * 100) + "%";
+        }
+
+        function formatDecimal(value) {
+          if (typeof value !== "number" || Number.isNaN(value)) return "n/a";
+          return value.toFixed(2);
+        }
+
+        function showToast(message, tone = "success") {
+          if (!selectors.toast) return;
+          selectors.toast.textContent = message;
+          selectors.toast.classList.remove("hidden");
+          selectors.toast.className =
+            "pointer-events-none fixed bottom-6 right-6 max-w-sm rounded-2xl border px-4 py-3 text-sm font-medium shadow-2xl transition";
+          if (tone === "error") {
+            selectors.toast.classList.add("border-rose-500/40", "bg-rose-500/90", "text-white", "shadow-rose-500/30");
+          } else {
+            selectors.toast.classList.add("border-emerald-500/40", "bg-emerald-500", "text-slate-900", "shadow-emerald-500/40");
+          }
+          clearTimeout(showToast.timeout);
+          showToast.timeout = window.setTimeout(() => {
+            selectors.toast.classList.add("hidden");
+          }, 4200);
+        }
+
+        function upsertResult(result) {
+          if (!result || !result.intake_id) return;
+          const existingIndex = state.results.findIndex((item) => item.intake_id === result.intake_id);
+          const hydrated = { ...result };
+          if (existingIndex >= 0) {
+            state.results[existingIndex] = { ...state.results[existingIndex], ...hydrated };
+          } else {
+            state.results.unshift(hydrated);
+          }
+          state.results.sort((a, b) => {
+            const dateA = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
+            const dateB = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
+            return dateB - dateA;
+          });
+          updateMetrics();
+        }
+
+        function updateMetrics() {
+          const total = state.results.length;
+          selectors.total.textContent = total.toString();
+
+          const highRisk = state.results.filter((res) => {
+            const classification = (res.classification || "").toLowerCase();
+            return classification.includes("high") || (typeof res.composite_score === "number" && res.composite_score >= 0.7);
+          }).length;
+          selectors.highRisk.textContent = highRisk.toString();
+
+          if (!total) {
+            selectors.average.textContent = "0%";
+            selectors.lastUpdated.textContent = "—";
+            return;
+          }
+
+          const sum = state.results.reduce((acc, res) => {
+            if (typeof res.composite_score === "number") {
+              return acc + res.composite_score;
+            }
+            return acc;
+          }, 0);
+          const average = Math.round((sum / total) * 100);
+          selectors.average.textContent = `${Number.isFinite(average) ? average : 0}%`;
+
+          const latest = state.results[0];
+          if (latest && latest.submitted_at) {
+            const timestamp = new Date(latest.submitted_at);
+            selectors.lastUpdated.textContent = timestamp.toLocaleString(undefined, {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+              day: "2-digit",
+              month: "short",
+            });
+          }
+        }
+
+        function renderResultsTable() {
+          selectors.resultsBody.innerHTML = "";
+          if (!state.results.length) {
+            if (selectors.resultsPlaceholder) {
+              selectors.resultsBody.appendChild(selectors.resultsPlaceholder);
+            }
+            return;
+          }
+          state.results.forEach((result) => {
+            const row = document.createElement("tr");
+            row.dataset.intake = result.intake_id;
+            row.className =
+              "group cursor-pointer transition hover:bg-slate-800/50 " +
+              (state.selectedId === result.intake_id ? "bg-slate-800/60 ring-1 ring-emerald-500/40" : "");
+
+            const idCell = document.createElement("td");
+            idCell.className = "px-4 py-3 font-mono text-xs text-emerald-200";
+            idCell.textContent = result.intake_id;
+
+            const classificationCell = document.createElement("td");
+            classificationCell.className = "px-4 py-3 text-xs";
+            const badge = document.createElement("span");
+            const classification = (result.classification || "").toLowerCase();
+            badge.className =
+              "inline-flex items-center gap-1 rounded-full border px-3 py-1 font-semibold capitalize " +
+              (classificationStyles[classification] || "border-slate-500/40 bg-slate-500/10 text-slate-200");
+            badge.textContent = result.classification || "unknown";
+            classificationCell.appendChild(badge);
+
+            const scoreCell = document.createElement("td");
+            scoreCell.className = "px-4 py-3 font-semibold text-emerald-200";
+            scoreCell.textContent =
+              typeof result.composite_score === "number" ? formatDecimal(result.composite_score) : "n/a";
+
+            const createdCell = document.createElement("td");
+            createdCell.className = "px-4 py-3 text-xs text-slate-400";
+            if (result.submitted_at) {
+              const submittedAt = new Date(result.submitted_at);
+              createdCell.textContent = submittedAt.toLocaleString(undefined, {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+                day: "2-digit",
+                month: "short",
+              });
+            } else {
+              createdCell.textContent = "—";
+            }
+
+            row.appendChild(idCell);
+            row.appendChild(classificationCell);
+            row.appendChild(scoreCell);
+            row.appendChild(createdCell);
+            selectors.resultsBody.appendChild(row);
+          });
+        }
+
+        function renderHeuristics(heuristics) {
+          selectors.heuristicsList.innerHTML = "";
+          if (!Array.isArray(heuristics) || !heuristics.length) {
+            const item = document.createElement("li");
+            item.className = "text-xs text-slate-400";
+            item.textContent = "No heuristics were triggered for this case.";
+            selectors.heuristicsList.appendChild(item);
+            return;
+          }
+          heuristics.forEach((heuristic) => {
+            const item = document.createElement("li");
+            item.className = "rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-100";
+            item.textContent = heuristic;
+            selectors.heuristicsList.appendChild(item);
+          });
+        }
+
+        function renderStylometric(anomalies) {
+          selectors.stylometricList.innerHTML = "";
+          if (!anomalies || typeof anomalies !== "object" || !Object.keys(anomalies).length) {
+            const item = document.createElement("li");
+            item.className = "text-xs text-slate-400";
+            item.textContent = "No stylometric anomalies detected.";
+            selectors.stylometricList.appendChild(item);
+            return;
+          }
+          Object.entries(anomalies).forEach(([key, value]) => {
+            const row = document.createElement("li");
+            row.className = "flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/60 px-4 py-2";
+            const label = document.createElement("span");
+            label.className = "text-xs uppercase tracking-wide text-slate-400";
+            label.textContent = key.replace(/_/g, " ");
+            const metric = document.createElement("span");
+            metric.className = "font-mono text-sm text-emerald-200";
+            metric.textContent = typeof value === "number" ? value.toFixed(2) : String(value);
+            row.appendChild(label);
+            row.appendChild(metric);
+            selectors.stylometricList.appendChild(row);
+          });
+        }
+
+        function renderProvenance(provenance) {
+          selectors.provenanceWatermark.textContent = "";
+          selectors.provenanceSignature.textContent = "";
+          selectors.provenanceNotes.innerHTML = "";
+          if (!provenance) {
+            selectors.provenanceWatermark.textContent = "No provenance data returned.";
+            return;
+          }
+          selectors.provenanceWatermark.textContent = `Watermark: ${provenance.watermark_present ? "detected" : "absent"}`;
+          selectors.provenanceSignature.textContent = `Signature: ${provenance.signature_valid ? "valid" : "invalid"}`;
+
+          if (Array.isArray(provenance.validation_notes) && provenance.validation_notes.length) {
+            provenance.validation_notes.forEach((note) => {
+              const item = document.createElement("li");
+              item.textContent = `• ${note}`;
+              selectors.provenanceNotes.appendChild(item);
+            });
+          } else {
+            const item = document.createElement("li");
+            item.textContent = "• No additional validation notes.";
+            selectors.provenanceNotes.appendChild(item);
+          }
+        }
+
+        function renderGraph(graph) {
+          selectors.graphStats.innerHTML = "";
+          selectors.graphCommunities.innerHTML = "";
+          if (!graph) {
+            selectors.graphStats.textContent = "Graph summary unavailable.";
+            return;
+          }
+          const stats = [
+            { label: "Nodes", value: graph.node_count },
+            { label: "Edges", value: graph.edge_count },
+            { label: "Communities", value: Array.isArray(graph.communities) ? graph.communities.length : 0 },
+          ];
+          stats.forEach((stat) => {
+            const card = document.createElement("div");
+            card.className = "rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3";
+            const label = document.createElement("p");
+            label.className = "text-xs uppercase tracking-wide text-slate-400";
+            label.textContent = stat.label;
+            const value = document.createElement("p");
+            value.className = "mt-2 text-lg font-semibold text-emerald-200";
+            value.textContent = String(stat.value ?? "—");
+            card.appendChild(label);
+            card.appendChild(value);
+            selectors.graphStats.appendChild(card);
+          });
+
+          const actors = Array.isArray(graph.high_risk_actors) ? graph.high_risk_actors : [];
+          selectors.selectedActors.textContent = actors.length ? actors.join(", ") : "None flagged";
+
+          if (Array.isArray(graph.communities) && graph.communities.length) {
+            graph.communities.forEach((community, index) => {
+              const card = document.createElement("div");
+              card.className = "rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3";
+              const title = document.createElement("p");
+              title.className = "text-xs uppercase tracking-wide text-slate-400";
+              title.textContent = `Community ${index + 1}`;
+              const members = document.createElement("p");
+              members.className = "mt-1 text-xs text-slate-300";
+              const nodes = Array.isArray(community.members) ? community.members : community.nodes;
+              members.textContent = nodes && nodes.length ? nodes.join(", ") : "No nodes listed";
+              card.appendChild(title);
+              card.appendChild(members);
+              selectors.graphCommunities.appendChild(card);
+            });
+          } else {
+            const placeholder = document.createElement("div");
+            placeholder.className = "rounded-xl border border-dashed border-white/10 bg-slate-900/50 px-4 py-3 text-xs text-slate-500";
+            placeholder.textContent = "No community clusters reported for this intake.";
+            selectors.graphCommunities.appendChild(placeholder);
+          }
+        }
+
+        function renderSubmittedPayload(intakeId) {
+          const payload = submissionCache.get(intakeId);
+          selectors.submittedText.textContent = payload && payload.text ? payload.text : "Source text not available in this session.";
+
+          selectors.submittedMeta.innerHTML = "";
+          if (payload && payload.metadata) {
+            Object.entries(payload.metadata).forEach(([key, value]) => {
+              if (!value) return;
+              const item = document.createElement("div");
+              item.className = "rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2";
+              const label = document.createElement("p");
+              label.className = "text-[10px] uppercase tracking-widest text-slate-400";
+              label.textContent = key.replace(/_/g, " ");
+              const content = document.createElement("p");
+              content.className = "mt-1 text-xs text-slate-200";
+              content.textContent = typeof value === "string" ? value : JSON.stringify(value);
+              item.appendChild(label);
+              item.appendChild(content);
+              selectors.submittedMeta.appendChild(item);
+            });
+          } else {
+            const placeholder = document.createElement("div");
+            placeholder.className = "text-xs text-slate-500";
+            placeholder.textContent = "Metadata was not captured for this intake.";
+            selectors.submittedMeta.appendChild(placeholder);
+          }
+
+          selectors.submittedTags.innerHTML = "";
+          const tags = payload && Array.isArray(payload.tags) ? payload.tags : [];
+          if (tags.length) {
+            tags.forEach((tag) => {
+              const pill = document.createElement("span");
+              pill.className = "rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs";
+              pill.textContent = tag;
+              selectors.submittedTags.appendChild(pill);
+            });
+          } else {
+            const pill = document.createElement("span");
+            pill.className = "text-xs text-slate-500";
+            pill.textContent = "No analyst tags applied.";
+            selectors.submittedTags.appendChild(pill);
+          }
+        }
+
+        function renderBreakdown(breakdown) {
+          const keys = ["linguistic_score", "behavioral_score", "hf_probability", "ollama_risk"];
+          keys.forEach((key) => {
+            const bar = selectors.scoreBars[key];
+            const label = selectors.scoreLabels[key];
+            const value = breakdown && typeof breakdown[key] === "number" ? breakdown[key] : null;
+            if (value === null) {
+              if (bar) {
+                bar.style.width = "4%";
+                bar.style.opacity = "0.3";
+              }
+              if (label) {
+                label.textContent = "n/a";
+              }
+            } else {
+              if (bar) {
+                bar.style.width = Math.max(6, Math.round(value * 100)) + "%";
+                bar.style.opacity = "1";
+              }
+              if (label) {
+                label.textContent = formatPercent(value);
+              }
+            }
+          });
+          if (breakdown && typeof breakdown === "object") {
+            renderHeuristics(breakdown.heuristics);
+            renderStylometric(breakdown.stylometric_anomalies);
+          } else {
+            renderHeuristics([]);
+            renderStylometric({});
+          }
+        }
+
+        function populateDetail(result) {
+          if (!result) return;
+          selectors.detailEmpty.classList.add("hidden");
+          selectors.detailPanel.classList.remove("hidden");
+
+          selectors.selectedCase.textContent = result.intake_id;
+          selectors.selectedCase.setAttribute("title", result.intake_id);
+          selectors.selectedScore.textContent = typeof result.composite_score === "number" ? formatPercent(result.composite_score) : "n/a";
+          selectors.selectedSubmitted.textContent = result.submitted_at
+            ? new Date(result.submitted_at).toLocaleString()
+            : "—";
+
+          const classification = (result.classification || "").toLowerCase();
+          selectors.riskBadge.textContent = result.classification || "Unknown";
+          selectors.riskBadge.className =
+            "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200 " +
+            (classificationStyles[classification] || "border-slate-500/40 bg-slate-500/20");
+          selectors.riskBadge.classList.remove("hidden");
+
+          renderBreakdown(result.breakdown);
+          renderProvenance(result.provenance);
+          renderGraph(result.graph_summary);
+          renderSubmittedPayload(result.intake_id);
+        }
+
+        async function selectCase(intakeId, hydratedResult) {
+          if (!intakeId) return;
+          state.selectedId = intakeId;
+          let result = hydratedResult || state.results.find((item) => item.intake_id === intakeId);
+
+          if (!result || !result.breakdown) {
+            try {
+              const response = await fetch(`/api/v1/cases/${encodeURIComponent(intakeId)}`);
+              if (response.ok) {
+                result = await response.json();
+                upsertResult(result);
+              }
+            } catch (error) {
+              console.error("Failed to hydrate case detail", error);
+              showToast("Unable to refresh case detail from API.", "error");
+            }
+          }
+
+          if (result) {
+            populateDetail(result);
+            renderResultsTable();
+          }
+        }
+
+        selectors.resultsBody.addEventListener("click", (event) => {
+          const row = event.target.closest("tr[data-intake]");
+          if (!row) return;
+          const intakeId = row.dataset.intake;
+          selectCase(intakeId);
+        });
+
+        selectors.intakeForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!selectors.submitButton) return;
+          selectors.submitButton.disabled = true;
+          selectors.submitButton.classList.add("opacity-60");
+
+          const formData = new FormData(selectors.intakeForm);
+          const text = (formData.get("text") || "").toString().trim();
+          const language = (formData.get("language") || "en").toString().trim() || "en";
+          const source = (formData.get("source") || "unknown").toString().trim() || "unknown";
+          const tags = (formData.get("tags") || "")
+            .toString()
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+          const platform = (formData.get("platform") || "").toString().trim();
+          const region = (formData.get("region") || "").toString().trim();
+          const actorId = (formData.get("actor_id") || "").toString().trim();
+
+          const metadata = {
+            platform: platform || "unspecified",
+            region: region || null,
+            actor_id: actorId || null,
+          };
+
+          const payload = {
+            text,
+            language,
+            source,
+            tags,
+            metadata,
+          };
+
+          if (text.length < 20) {
+            showToast("Narrative must be at least 20 characters.", "error");
+            selectors.submitButton.disabled = false;
+            selectors.submitButton.classList.remove("opacity-60");
+            return;
+          }
+
+          try {
+            const response = await fetch("/api/v1/intake", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+              throw new Error(`API responded with ${response.status}`);
+            }
+            const result = await response.json();
+            submissionCache.set(result.intake_id, payload);
+            upsertResult(result);
+            renderResultsTable();
+            await selectCase(result.intake_id, result);
+            selectors.intakeForm.reset();
+            selectors.intakeForm.querySelector("#input-language").value = "en";
+            showToast("Narrative analysed successfully.");
+          } catch (error) {
+            console.error("Failed to submit intake", error);
+            showToast("Unable to analyse narrative. Check server logs.", "error");
+          } finally {
+            selectors.submitButton.disabled = false;
+            selectors.submitButton.classList.remove("opacity-60");
+          }
+        });
+
+        selectors.shareForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!state.selectedId) {
+            showToast("Select a case before generating a sharing package.", "error");
+            return;
+          }
+          selectors.shareButton.disabled = true;
+          selectors.shareButton.classList.add("opacity-60");
+          selectors.shareOutput.classList.add("hidden");
+          selectors.shareOutput.textContent = "";
+
+          const formData = new FormData(selectors.shareForm);
+          const payload = {
+            intake_id: state.selectedId,
+            destination: (formData.get("destination") || "USA").toString(),
+            justification: (formData.get("justification") || "Operational collaboration").toString(),
+            include_personal_data: formData.get("include_personal_data") === "on",
+          };
+
+          try {
+            const response = await fetch("/api/v1/share", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+              const errorPayload = await response.json().catch(() => ({}));
+              throw new Error(errorPayload.detail || "Failed to generate package");
+            }
+            const packagePayload = await response.json();
+            selectors.shareOutput.textContent = JSON.stringify(packagePayload, null, 2);
+            selectors.shareOutput.classList.remove("hidden");
+            showToast("Sharing package generated.");
+          } catch (error) {
+            console.error("Share package error", error);
+            showToast(error.message || "Unable to generate sharing package.", "error");
+          } finally {
+            selectors.shareButton.disabled = false;
+            selectors.shareButton.classList.remove("opacity-60");
+          }
+        });
+
+        function appendEventCard(eventData) {
+          if (selectors.eventEmpty) {
+            selectors.eventEmpty.classList.add("hidden");
+          }
+
+          const card = document.createElement("article");
+          card.className = "rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 shadow-sm shadow-emerald-500/10";
+
+          const header = document.createElement("div");
+          header.className = "flex items-center justify-between gap-3";
+
+          const badge = document.createElement("span");
+          const classification = (eventData.classification || "").toLowerCase();
+          badge.className =
+            "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold uppercase " +
+            (classificationStyles[classification] || "border-slate-500/40 bg-slate-500/10 text-slate-200");
+          badge.textContent = eventData.classification || "event";
+
+          const score = document.createElement("span");
+          score.className = "font-mono text-sm text-emerald-200";
+          if (typeof eventData.score === "number") {
+            score.textContent = formatDecimal(eventData.score);
+          } else {
+            score.textContent = "n/a";
+          }
+
+          header.appendChild(badge);
+          header.appendChild(score);
+
+          const id = document.createElement("p");
+          id.className = "mt-2 font-mono text-xs text-slate-400";
+          id.textContent = eventData.intake_id;
+
+          const timestamp = document.createElement("p");
+          timestamp.className = "mt-1 text-[10px] uppercase tracking-widest text-slate-500";
+          timestamp.textContent = eventData.submitted_at
+            ? new Date(eventData.submitted_at).toLocaleTimeString()
+            : new Date().toLocaleTimeString();
+
+          card.appendChild(header);
+          card.appendChild(id);
+          card.appendChild(timestamp);
+
+          selectors.eventLog.prepend(card);
+          const maxEntries = 20;
+          while (selectors.eventLog.children.length > maxEntries) {
+            selectors.eventLog.removeChild(selectors.eventLog.lastElementChild);
+          }
+        }
+
+        function handleEventStream() {
+          try {
+            const source = new EventSource("/api/v1/events/stream");
+            source.onmessage = async (event) => {
+              try {
+                const payload = JSON.parse(event.data);
+                appendEventCard(payload);
+                if (!state.results.some((item) => item.intake_id === payload.intake_id)) {
+                  const response = await fetch(`/api/v1/cases/${encodeURIComponent(payload.intake_id)}`);
+                  if (response.ok) {
+                    const result = await response.json();
+                    upsertResult(result);
+                    renderResultsTable();
+                  }
+                }
+              } catch (parseError) {
+                console.error("Failed to parse event", parseError);
+              }
+            };
+            source.onerror = () => {
+              showToast("Event stream interrupted. Retrying…", "error");
+              source.close();
+              setTimeout(handleEventStream, 4000);
+            };
+          } catch (error) {
+            console.error("Failed to create event stream", error);
+          }
+        }
+
+        handleEventStream();
+      });
+    </script>
+  </body>
+</html>

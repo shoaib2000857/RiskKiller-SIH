@@ -1,0 +1,119 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.ENV/
+
+# Pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+media/
+
+# Flask instance folder
+instance/
+
+# dotenv
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# Editors
+*.swp
+*~
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Mac
+.DS_Store
+
+# Linux trash
+.Trash-
+
+# Data and model artifacts (keep samples/ and data/intake_example.json checked in)
+data/
+models/
+*.h5
+*.pt
+*.pth
+*.ckpt
+*.bin
+
+# Large files
+*.tar.gz
+*.zip
+*.tgz
+
+# Logs
+logs/
+*.log
+
+# System files
+.idea/
+
+# Coverage and reports
+reports/
+
+# Ignore compiled JS/CSS if any
+static/dist/
+
+# Allow listed files (if you want to keep data or models, remove these lines)
+# !data/intake_example.json
+# !samples/
