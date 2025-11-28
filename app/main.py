@@ -57,7 +57,7 @@ async def get_case(intake_id: str) -> DetectionResult:
         raise HTTPException(status_code=404, detail="Case not found")
     graph_snapshot = orchestrator.graph.summary()
     # reconstruct result for client convenience
-    return DetectionResult.parse_obj(
+    return DetectionResult.model_validate(
         {
             "intake_id": intake_id,
             "submitted_at": record["created_at"],
@@ -65,7 +65,7 @@ async def get_case(intake_id: str) -> DetectionResult:
             "classification": record["classification"],
             "breakdown": record["breakdown"],
             "provenance": record["provenance"],
-            "graph_summary": graph_snapshot.dict(),
+            "graph_summary": graph_snapshot.model_dump(),
         }
     )
 

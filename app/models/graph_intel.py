@@ -104,7 +104,7 @@ class GraphIntelEngine:
             indicator_pool.add(alert.actor)
             indicator_pool.update(alert.peer_actors)
         payload_fingerprint = hashlib.sha1(
-            json.dumps(summary.dict(), sort_keys=True).encode("utf-8")
+            json.dumps(summary.model_dump(), sort_keys=True).encode("utf-8")
         ).hexdigest()
         return ThreatIntelFeed(
             generated_at=datetime.utcnow(),

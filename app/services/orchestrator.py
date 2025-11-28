@@ -38,9 +38,9 @@ class AnalysisOrchestrator:
             raw_text=intake.text,
             classification=classification,
             composite_score=composite_score,
-            metadata=intake.dict().get("metadata", {}) or {},
-            breakdown=breakdown.dict(),
-            provenance=provenance.dict(),
+            metadata=intake.model_dump().get("metadata", {}) or {},
+            breakdown=breakdown.model_dump(),
+            provenance=provenance.model_dump(),
         )
         self.db.log_action(
             intake_id=intake_id,
