@@ -28,6 +28,7 @@ venv/
 ENV/
 env/
 .venv/
+.venv-*/
 .ENV/
 
 # Pipenv
@@ -69,6 +70,12 @@ instance/
 # dotenv
 .env
 .env.*
+
+# Frontend environment files
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 
 # VS Code
 .vscode/
@@ -117,3 +124,15 @@ static/dist/
 # Allow listed files (if you want to keep data or models, remove these lines)
 # !data/intake_example.json
 # !samples/
+
+# Node modules and Next.js build artifacts
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Package manager lockfiles (optional - uncomment to track them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
