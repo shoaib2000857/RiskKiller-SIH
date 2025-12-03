@@ -58,6 +58,8 @@
 
 **Option 1: Using Run Scripts (Recommended - No manual activation needed!)**
 
+**macOS/Linux Users:**
+
 **Terminal 1 - Backend**
 ```bash
 cd TattvaDrishti
@@ -69,6 +71,22 @@ cd TattvaDrishti
 ```bash
 cd TattvaDrishti
 ./run_frontend.sh
+```
+✅ Frontend running at http://localhost:3000
+
+**Windows Users:**
+
+**Terminal 1 - Backend**
+```cmd
+cd TattvaDrishti
+run_backend.bat
+```
+✅ Backend running at http://localhost:8000
+
+**Terminal 2 - Frontend**
+```cmd
+cd TattvaDrishti
+run_frontend.bat
 ```
 ✅ Frontend running at http://localhost:3000
 
