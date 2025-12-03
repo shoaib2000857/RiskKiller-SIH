@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import Speedometer from "./Speedometer";
+import RadarChart from "./RadarChart";
 
 const riskBadgeClasses = {
   "high-risk":
@@ -171,29 +172,42 @@ export default function CaseDetail({
 
       <section className="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
-          Stylometric anomalies
+          Stylometric analysis
         </h3>
-        <ul className="mt-4 space-y-2 text-sm text-slate-200">
-          {Object.keys(stylometric).length === 0 ? (
-            <li className="text-xs text-slate-500">
-              No stylometric anomalies detected.
-            </li>
-          ) : (
-            Object.entries(stylometric).map(([key, value]) => (
-              <li
-                key={key}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/50 px-4 py-2"
-              >
-                <span className="text-xs uppercase tracking-wide text-slate-400">
-                  {key.replace(/_/g, " ")}
-                </span>
-                <span className="font-mono text-sm text-emerald-200">
-                  {typeof value === "number" ? value.toFixed(2) : String(value)}
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Stylometric Anomalies - Left */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+              Anomalies
+            </h4>
+            <ul className="space-y-2 text-sm text-slate-200">
+              {Object.keys(stylometric).length === 0 ? (
+                <li className="text-xs text-slate-500">
+                  No stylometric anomalies detected.
+                </li>
+              ) : (
+                Object.entries(stylometric).map(([key, value]) => (
+                  <li
+                    key={key}
+                    className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/50 px-4 py-2"
+                  >
+                    <span className="text-xs uppercase tracking-wide text-slate-400">
+                      {key.replace(/_/g, " ")}
+                    </span>
+                    <span className="font-mono text-sm text-emerald-200">
+                      {typeof value === "number" ? value.toFixed(2) : String(value)}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+
+          {/* Signal Radar - Right */}
+          <div className="flex justify-center items-start">
+            <RadarChart breakdown={breakdown} />
+          </div>
+        </div>
       </section>
 
       <section>
