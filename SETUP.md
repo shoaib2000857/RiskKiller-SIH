@@ -32,17 +32,26 @@
    # Install dependencies
    python -m pip install --upgrade pip
    python -m pip install -r requirements.txt
+   
+   # Setup environment file
+   cp .env.example .env
+   # Edit .env and update values as needed
    ```
 
 3. **Frontend Setup**
    ```bash
    cd frontend
    
-   # Create environment file
+   # Create environment file from template
+   cp .env.example .env.local
+   # Or create it manually:
    echo 'NEXT_PUBLIC_API_BASE_URL=http://localhost:8000' > .env.local
    
    # Install dependencies
    npm install
+   
+   # Return to root directory
+   cd ..
    ```
 
 ### Running the Application
