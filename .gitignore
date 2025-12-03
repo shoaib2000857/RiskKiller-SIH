@@ -25,11 +25,14 @@ var/
 
 # Virtual environments
 venv/
+.venv/
 ENV/
 env/
-.venv/
-.venv-*/
 .ENV/
+
+# pyenv
+.env
+.python-version
 
 # Pipenv
 Pipfile.lock
