@@ -166,8 +166,31 @@ export default function CaseDetail({
         </h3>
         <ScoreBar label="Linguistic confidence" value={breakdown.linguistic_score} color="bg-emerald-400" />
         <ScoreBar label="Behavioral risk" value={breakdown.behavioral_score} color="bg-amber-400" />
-        <ScoreBar label="Hugging Face probability" value={breakdown.hf_probability} color="bg-cyan-400" />
-        <ScoreBar label="Ollama qualitative risk" value={breakdown.ollama_risk} color="bg-fuchsia-400" />
+        <ScoreBar label="AI Detection probability" value={breakdown.ai_probability} color="bg-cyan-400" />
+        {breakdown.model_family && (
+          <div className="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Model Family Detected</p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-fuchsia-300">{breakdown.model_family}</span>
+              <span className="text-xs text-slate-400">
+                {breakdown.model_family_confidence ? `${(breakdown.model_family_confidence * 100).toFixed(1)}%` : '—'}
+              </span>
+            </div>
+            {breakdown.model_family_probabilities && Object.keys(breakdown.model_family_probabilities).length > 0 && (
+              <div className="mt-3 space-y-1">
+                {Object.entries(breakdown.model_family_probabilities).map(([family, prob]) => (
+                  <div key={family} className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">{family}</span>
+                    <span className="font-mono text-slate-300">{(prob * 100).toFixed(1)}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {breakdown.ollama_risk !== null && breakdown.ollama_risk !== undefined && (
+          <ScoreBar label="Ollama qualitative risk" value={breakdown.ollama_risk} color="bg-rose-400" />
+        )}
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">

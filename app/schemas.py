@@ -22,7 +22,10 @@ class ContentIntake(BaseModel):
 class DetectionBreakdown(BaseModel):
     linguistic_score: float
     behavioral_score: float
-    hf_probability: Optional[float] = None
+    ai_probability: Optional[float] = None
+    model_family: Optional[str] = None
+    model_family_confidence: Optional[float] = None
+    model_family_probabilities: Optional[Dict[str, float]] = None
     ollama_risk: Optional[float] = None
     stylometric_anomalies: Dict[str, float]
     heuristics: List[str]
