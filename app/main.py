@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from .config import Settings, get_settings
 from .schemas import (
     ContentIntake,
+    BaseModel,
     DetectionResult,
     SharingPackage,
     SharingRequest,
@@ -95,3 +96,13 @@ async def stream_events():
             yield f"data: {json.dumps(event)}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+class FingerprintCheckPayload(BaseModel):
+    text: str
+
+
+@app.post("/api/v1/fingerprint/check")
+async def fingerprint_check(payload: FingerprintCheckPayload):
+    matches = orchestrator.check_fingerprint(payload.text)
+    return {"matches": matches}

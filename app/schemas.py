@@ -26,7 +26,6 @@ class DetectionBreakdown(BaseModel):
     model_family: Optional[str] = None
     model_family_confidence: Optional[float] = None
     model_family_probabilities: Optional[Dict[str, float]] = None
-    ollama_risk: Optional[float] = None
     stylometric_anomalies: Dict[str, float]
     heuristics: List[str]
 
@@ -36,6 +35,7 @@ class ProvenancePayload(BaseModel):
     watermark_hash: Optional[str] = None
     signature_valid: bool
     validation_notes: List[str]
+    content_hash: str
 
 
 class GNNCluster(BaseModel):

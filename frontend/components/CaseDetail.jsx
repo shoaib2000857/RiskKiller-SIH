@@ -188,9 +188,7 @@ export default function CaseDetail({
             )}
           </div>
         )}
-        {breakdown.ollama_risk !== null && breakdown.ollama_risk !== undefined && (
-          <ScoreBar label="Ollama qualitative risk" value={breakdown.ollama_risk} color="bg-rose-400" />
-        )}
+        {/* Ollama qualitative risk removed */}
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
@@ -265,6 +263,12 @@ export default function CaseDetail({
           </div>
           <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200">
             Signature: {provenance.signature_valid ? "valid" : "invalid"}
+          </div>
+          <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200 col-span-2">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Content fingerprint (SHA-256)</p>
+            <p className="mt-1 font-mono text-[11px] break-all text-emerald-200">
+              {provenance.content_hash || "—"}
+            </p>
           </div>
         </div>
         <ul className="mt-4 space-y-1 text-xs text-slate-400">

@@ -49,6 +49,13 @@ class AnalysisOrchestrator:
             payload={"score": composite_score, "classification": classification},
         )
 
+        # Store fingerprint for post-hoc verification
+        try:
+            self.db.store_fingerprint(intake_id, intake.text, provenance.content_hash)
+        except Exception:
+            # non-fatal; continue
+            pass
+
         result = DetectionResult(
             intake_id=intake_id,
             submitted_at=submitted_at,
@@ -74,6 +81,9 @@ class AnalysisOrchestrator:
         while True:
             event = await self._event_queue.get()
             yield event
+
+    def check_fingerprint(self, text: str) -> list[Dict[str, Any]]:
+        return self.db.check_fingerprint(text)
 
     def build_sharing_package(self, request: SharingRequest) -> SharingPackage:
         record = self.db.fetch_case(request.intake_id)

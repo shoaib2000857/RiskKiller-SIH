@@ -43,6 +43,17 @@ class Database:
                 )
             """
             )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS fingerprints (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    intake_id TEXT NOT NULL,
+                    content_hash TEXT NOT NULL,
+                    normalized_hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """
+            )
 
     @contextmanager
     def _cursor(self):
@@ -89,6 +100,43 @@ class Database:
                     datetime.utcnow().isoformat(),
                 ),
             )
+
+    def _normalize_text(self, text: str) -> str:
+        # simple normalization for fuzzy match: lowercase and collapse whitespace
+        return "".join(text.lower().split())
+
+    def store_fingerprint(self, intake_id: str, text: str, content_hash: str) -> None:
+        normalized_hash = hashlib.sha256(self._normalize_text(text).encode("utf-8")).hexdigest()
+        with self._cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO fingerprints (intake_id, content_hash, normalized_hash, created_at)
+                VALUES (?, ?, ?, ?)
+            """,
+                (intake_id, content_hash, normalized_hash, datetime.utcnow().isoformat()),
+            )
+
+    def check_fingerprint(self, text: str) -> list[Dict[str, Any]]:
+        normalized_hash = hashlib.sha256(self._normalize_text(text).encode("utf-8")).hexdigest()
+        with self._cursor() as cur:
+            cur.execute(
+                """
+                SELECT intake_id, content_hash, normalized_hash, created_at
+                FROM fingerprints
+                WHERE normalized_hash = ? OR content_hash = ?
+            """,
+                (normalized_hash, normalized_hash),
+            )
+            rows = cur.fetchall() or []
+            return [
+                {
+                    "intake_id": r[0],
+                    "content_hash": r[1],
+                    "normalized_hash": r[2],
+                    "created_at": r[3],
+                }
+                for r in rows
+            ]
 
     def fetch_case(self, intake_id: str) -> Optional[Dict[str, Any]]:
         with self._cursor() as cur:

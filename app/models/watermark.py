@@ -16,6 +16,8 @@ class WatermarkEngine:
 
     def verify(self, text: str) -> ProvenancePayload:
         notes: List[str] = []
+        # Compute cryptographic hash of full content for traceability
+        content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         watermark_present, wm_hash = self._check_watermark(text, notes)
         signature_valid = self._check_signature(text, notes)
         if not watermark_present:
@@ -30,6 +32,7 @@ class WatermarkEngine:
             watermark_hash=wm_hash,
             signature_valid=signature_valid,
             validation_notes=notes,
+            content_hash=content_hash,
         )
 
     def _check_watermark(self, text: str, notes: List[str]) -> Tuple[bool, str | None]:

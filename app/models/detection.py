@@ -78,7 +78,7 @@ class DetectorEngine:
         }
         self.bias = -0.25  # Slightly less negative bias for balance
         self._ai_detector = get_ai_detector()
-        self._ollama = OllamaClient()
+        # Ollama integration removed
 
     def detect(self, intake: ContentIntake) -> Tuple[float, str, DetectionBreakdown]:
         text = intake.text
@@ -114,9 +114,7 @@ class DetectorEngine:
                 )
 
         # 4. Semantic Risk (Ollama)
-        ollama_score = self._ollama_risk(text)
-        if ollama_score is not None:
-            heuristics.append(f"Semantic Analyst (Ollama) risk assessment: {ollama_score:.2f}/1.0.")
+        # Removed Ollama semantic risk integration
 
         # 5. Composite Scoring
         # Sigmoid the linear stylometric score to get 0-1 range
@@ -126,8 +124,7 @@ class DetectorEngine:
         composite = self._blend_scores(
             base_prob=base_prob,
             behavior_score=behavior_score,
-            ai_score=ai_score,
-            ollama_score=ollama_score
+            ai_score=ai_score
         )
 
         classification = self._classify(composite)
@@ -139,7 +136,7 @@ class DetectorEngine:
             model_family=model_family,
             model_family_confidence=model_family_confidence,
             model_family_probabilities=model_family_result.get("all_probabilities") if model_family_result else None,
-            ollama_risk=ollama_score,
+            # ollama_risk removed
             stylometric_anomalies={k: round(v, 3) for k, v in features.items()},
             heuristics=heuristics,
         )
@@ -260,7 +257,7 @@ class DetectorEngine:
 
         # Behavioral Heuristics (Metadata)
         if intake.metadata and intake.metadata.platform in self.SUSPECT_PLATFORMS:
-            platform_boost = 0.2 if "telegram-channel" in intake.metadata.platform else 0.1
+            platform_boost = 0.25 if "telegram-channel" in intake.metadata.platform else 0.12
             heuristics.append(f"Originating platform '{intake.metadata.platform}' is flagged as high-risk (+{platform_boost}).")
 
         if intake.tags and any(tag in self.HIGH_RISK_TAGS for tag in intake.tags):
@@ -268,7 +265,7 @@ class DetectorEngine:
 
         # Malware / Spam Heuristic
         link_count = intake.text.count("http")
-        if link_count > 2:
+        if link_count > 1:
             heuristics.append(f"Contains {link_count} external links (potential phishing/malware).")
 
         return heuristics
@@ -297,22 +294,22 @@ class DetectorEngine:
         urgency_hits = sum(1 for word in self.URGENCY_WORDS if word in text_lower)
         valence_hits = sum(1 for group in self.HIGH_VALENCE_WORDS.values() for word in group if word in text_lower)
         exclamations = text_lower.count('!') + text_lower.count('?')  # Rhetorical questions/excitement
-        emotional_boost = min((urgency_hits + valence_hits + exclamations / 5.0) / max(text_len / 100, 1), 0.2)  # Length-normalized
-        if emotional_boost > 0.1:
+        emotional_boost = min((urgency_hits + valence_hits + exclamations / 4.0) / max(text_len / 120, 1), 0.25)  # Loosened normalization
+        if emotional_boost > 0.06:
             boost += emotional_boost
             heuristics.append(f"Emotional manipulation via {urgency_hits} urgency terms, {valence_hits} valence words, and {exclamations} exclamations.")
 
         # 3. Call To Action (CTA) Detection (Regex-enhanced)
         cta_hits = sum(re.search(pattern, text_lower) is not None for pattern in self.CTA_PATTERNS)
         if cta_hits > 0:
-            cta_boost = min(cta_hits * 0.08, 0.15)  # Scaled by hits
+            cta_boost = min(cta_hits * 0.1, 0.2)  # Loosened
             boost += cta_boost
             heuristics.append(f"Detected {cta_hits} call-to-action patterns (common in influence ops).")
 
         # 4. Aggressive Formatting (length-normalized)
         upper_ratio = features.get("uppercase_ratio", 0)
-        if upper_ratio > 0.10:  # Adjusted threshold
-            boost += min(upper_ratio * 2.0, 0.12)
+        if upper_ratio > 0.08:  # Loosened threshold
+            boost += min(upper_ratio * 2.5, 0.15)
             heuristics.append("Aggressive use of capitalization.")
 
         # 5. Narrative Alignment & Coherence (New: Simple topic drift proxy)
@@ -320,12 +317,16 @@ class DetectorEngine:
             sent_keywords = [set(re.findall(r'\b[a-z]{4,}\b', s)) for s in sentences]
             overlaps = sum(len(k1 & k2) / max(len(k1), len(k2) or 1) for i, k1 in enumerate(sent_keywords) for k2 in sent_keywords[i+1:])
             coherence = overlaps / (len(sentences) - 1)
-            if coherence < 0.3:  # Low overlap = disjoint/drift (suspicious narratives)
-                boost += 0.08
+            if coherence < 0.35:  # Loosened threshold
+                boost += 0.1
                 heuristics.append("Low narrative coherence (potential topic drift in disinfo).")
 
         # Dynamic cap based on text length (short texts less reliable)
-        max_boost = min(0.85, 0.5 + text_len / 1000.0)
+        # Ensure a baseline if any heuristic fired
+        if boost > 0.0:
+            boost = max(boost, 0.1)
+
+        max_boost = min(0.9, 0.55 + text_len / 900.0)
         return min(boost, max_boost)
 
     def _normalize_features(self, features: Dict[str, float]) -> Dict[str, float]:
@@ -351,8 +352,7 @@ class DetectorEngine:
         self,
         base_prob: float,
         behavior_score: float,
-        ai_score: Optional[float],
-        ollama_score: Optional[float],
+        ai_score: Optional[float]
     ) -> float:
         """
         Weighted ensemble of all signals.
@@ -371,10 +371,7 @@ class DetectorEngine:
             weight = 0.45  # Slightly reduced to allow more blend
             composite = (composite * (1 - weight)) + (ai_score * weight)
 
-        # Integrate Ollama (The semantic analyst)
-        if ollama_score is not None:
-            weight = 0.2
-            composite = (composite * (1 - weight)) + (ollama_score * weight)
+        # Ollama integration removed
 
         return max(0.0, min(1.0, composite))
 
@@ -432,8 +429,4 @@ class DetectorEngine:
             return None, None
         return self._ai_detector.analyze_text(text)
 
-    def _ollama_risk(self, text: str) -> Optional[float]:
-        try:
-            return self._ollama.risk_assessment(text)
-        except Exception:
-            return None
+    # Ollama integration removed
