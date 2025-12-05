@@ -44,7 +44,8 @@ class DetectorEngine:
     URGENCY_WORDS = {
         "urgent", "now", "immediately", "alert", "warning", "critical",
         "expose", "truth", "share", "viral", "banned", "censored", "breaking",
-        "emergency", "must-see", "shocking", "revealed", "hidden"
+        "emergency", "must-see", "shocking", "revealed", "hidden","kill","murder",
+        "hit",""
     }
 
     # Valence words for emotional manipulation (positive/negative extremes)
