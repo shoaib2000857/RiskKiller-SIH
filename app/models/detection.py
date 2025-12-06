@@ -1,3 +1,4 @@
+import logging
 import math
 import re
 import statistics
@@ -8,6 +9,8 @@ from ..config import get_settings
 from ..integrations.hf_detector import get_ai_detector
 from ..integrations.ollama_client import OllamaClient
 from ..schemas import ContentIntake, DetectionBreakdown
+
+logger = logging.getLogger(__name__)
 
 
 class DetectorEngine:
@@ -79,7 +82,7 @@ class DetectorEngine:
         }
         self.bias = -0.25  # Slightly less negative bias for balance
         self._ai_detector = get_ai_detector()
-        # Ollama integration removed
+        self._ollama_client = OllamaClient()
 
     def detect(self, intake: ContentIntake) -> Tuple[float, str, DetectionBreakdown]:
         text = intake.text
@@ -115,7 +118,12 @@ class DetectorEngine:
                 )
 
         # 4. Semantic Risk (Ollama)
-        # Removed Ollama semantic risk integration
+        ollama_risk = self._ollama_risk_assessment(text)
+        if ollama_risk is not None:
+            heuristics.append(
+                f"Ollama semantic analysis: {ollama_risk:.1%} risk "
+                f"(model: {self.settings.ollama_model})."
+            )
 
         # 5. Composite Scoring
         # Sigmoid the linear stylometric score to get 0-1 range
@@ -125,7 +133,8 @@ class DetectorEngine:
         composite = self._blend_scores(
             base_prob=base_prob,
             behavior_score=behavior_score,
-            ai_score=ai_score
+            ai_score=ai_score,
+            ollama_risk=ollama_risk
         )
 
         classification = self._classify(composite)
@@ -137,7 +146,7 @@ class DetectorEngine:
             model_family=model_family,
             model_family_confidence=model_family_confidence,
             model_family_probabilities=model_family_result.get("all_probabilities") if model_family_result else None,
-            # ollama_risk removed
+            ollama_risk=ollama_risk,
             stylometric_anomalies={k: round(v, 3) for k, v in features.items()},
             heuristics=heuristics,
         )
@@ -353,26 +362,30 @@ class DetectorEngine:
         self,
         base_prob: float,
         behavior_score: float,
-        ai_score: Optional[float]
+        ai_score: Optional[float],
+        ollama_risk: Optional[float] = None
     ) -> float:
         """
         Weighted ensemble of all signals.
         If AI model is available, it carries the most weight.
+        Ollama risk replaces behavioral score when available.
         """
         # Start with the base linguistic score
         composite = base_prob * 0.35  # Slightly higher base weight
-        current_weight = 0.35
 
-        # Behavioral score is additive (risk booster)
-        composite += behavior_score * 0.25  # Increased behavioral influence
+        # Use Ollama semantic risk if available, otherwise fall back to behavioral score
+        if ollama_risk is not None:
+            # Ollama provides semantic/contextual risk analysis
+            composite += ollama_risk * 0.25
+        else:
+            # Behavioral score is additive (risk booster)
+            composite += behavior_score * 0.25  # Increased behavioral influence
 
         # Integrate AI Model (The expert)
         if ai_score is not None:
             # High trust in the DeBERTa model
             weight = 0.45  # Slightly reduced to allow more blend
             composite = (composite * (1 - weight)) + (ai_score * weight)
-
-        # Ollama integration removed
 
         return max(0.0, min(1.0, composite))
 
@@ -430,4 +443,13 @@ class DetectorEngine:
             return None, None
         return self._ai_detector.analyze_text(text)
 
-    # Ollama integration removed
+    def _ollama_risk_assessment(self, text: str) -> Optional[float]:
+        """
+        Use Ollama for semantic/contextual risk assessment.
+        Returns risk score 0.0-1.0 if available, None otherwise.
+        """
+        try:
+            return self._ollama_client.risk_assessment(text)
+        except Exception as e:
+            logger.warning(f"Ollama risk assessment failed: {e}")
+            return None

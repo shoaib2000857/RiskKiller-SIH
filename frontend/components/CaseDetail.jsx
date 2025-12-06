@@ -167,6 +167,9 @@ export default function CaseDetail({
         <ScoreBar label="Linguistic confidence" value={breakdown.linguistic_score} color="bg-emerald-400" />
         <ScoreBar label="Behavioral risk" value={breakdown.behavioral_score} color="bg-amber-400" />
         <ScoreBar label="AI Detection probability" value={breakdown.ai_probability} color="bg-cyan-400" />
+        {breakdown.ollama_risk !== null && breakdown.ollama_risk !== undefined && (
+          <ScoreBar label="Ollama Semantic Risk" value={breakdown.ollama_risk} color="bg-purple-400" />
+        )}
         {breakdown.model_family && (
           <div className="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3">
             <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Model Family Detected</p>
@@ -188,7 +191,6 @@ export default function CaseDetail({
             )}
           </div>
         )}
-        {/* Ollama qualitative risk removed */}
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-slate-950/60 px-5 py-5">
