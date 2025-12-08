@@ -10,6 +10,7 @@ import Toast from "@/components/Toast";
 import FederatedBlockchain from "@/components/FederatedBlockchain";
 import ImageAnalyzer from "@/components/ImageAnalyzer";
 import WorldHeatmapLeaflet from "@/components/WorldHeatmapLeaflet";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   submitIntake,
   fetchCase,
@@ -235,6 +236,9 @@ export default function HomePage() {
         <header className="relative z-10 border-b border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950">
           <div className="mx-auto max-w-7xl px-6 py-12">
             <div className="flex flex-col gap-10">
+              <div className="flex justify-end">
+                <ThemeToggle />
+              </div>
               <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-3xl space-y-4">
                   <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-emerald-300">
@@ -242,7 +246,7 @@ export default function HomePage() {
                   </p>
                   <h1 className="text-4xl font-semibold leading-tight text-white md:text-5xl">
                     Proactive tradecraft dashboard for{" "}
-                    <span className="text-emerald-300">malign influence</span>{" "}
+                    <span className="text-emerald-300 hero-highlight">malign influence</span>{" "}
                     detection.
                   </h1>
                   <p className="text-base text-slate-300 md:text-lg">
