@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Federated Blockchain Configuration
     federated_encryption_key: str = Field("LULSnIHlBjTSfWDfqVl0kTV9qXUFN0EpGbynAB_34TM=", env="BLOCK_ENCRYPTION_KEY")
-    federated_nodes: str = Field("http://localhost:8000", env="FEDERATED_NODES")
+    federated_nodes: str = Field("http://localhost:8000,http://localhost:8001,http://localhost:8002,http://localhost:8003,http://localhost:8004", env="FEDERATED_NODES")
     
     # Sightengine Image Detection API
     sightengine_api_user: str = Field("907314243", env="SIGHTENGINE_API_USER")
