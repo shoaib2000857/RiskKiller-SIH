@@ -1,7 +1,7 @@
 import hashlib
 import re
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from ..config import get_settings
 from ..schemas import ProvenancePayload
@@ -35,7 +35,7 @@ class WatermarkEngine:
             content_hash=content_hash,
         )
 
-    def _check_watermark(self, text: str, notes: List[str]) -> Tuple[bool, str | None]:
+    def _check_watermark(self, text: str, notes: List[str]) -> Tuple[bool, Optional[str]]:
         match = self.WATERMARK_PATTERN.search(text)
         if not match:
             digest = hashlib.sha256(

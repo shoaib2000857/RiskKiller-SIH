@@ -8,6 +8,7 @@ import CaseTable from "@/components/CaseTable";
 import CaseDetail from "@/components/CaseDetail";
 import Toast from "@/components/Toast";
 import FederatedBlockchain from "@/components/FederatedBlockchain";
+import WorldHeatmapLeaflet from "@/components/WorldHeatmapLeaflet";
 import {
   submitIntake,
   fetchCase,
@@ -227,8 +228,8 @@ export default function HomePage() {
   return (
     <>
       <main className="relative min-h-screen overflow-hidden pb-20">
-        <div className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-emerald-500/40 blur-3xl opacity-30" />
-        <div className="absolute -right-44 bottom-[-6rem] h-96 w-96 rounded-full bg-cyan-500/30 blur-[160px] opacity-60" />
+        <div className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-emerald-500/40 blur-3xl opacity-30" style={{ pointerEvents: "none" }} />
+        <div className="absolute -right-44 bottom-[-6rem] h-96 w-96 rounded-full bg-cyan-500/30 blur-[160px] opacity-60" style={{ pointerEvents: "none" }} />
 
         <header className="relative z-10 border-b border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950">
           <div className="mx-auto max-w-7xl px-6 py-12">
@@ -311,6 +312,11 @@ export default function HomePage() {
             </div>
             <EventsFeed events={events} />
           </div>
+
+          <div className="mt-12">
+            <WorldHeatmapLeaflet />
+          </div>
+
 
           <div className="mt-12 grid grid-cols-1 gap-8 xl:grid-cols-[1.4fr]">
             <CaseDetail

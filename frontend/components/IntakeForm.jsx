@@ -19,6 +19,10 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
       );
       return;
     }
+    if (!region || !region.trim()) {
+      onValidationError?.("Region (city/district) is required.");
+      return;
+    }
     const payload = {
       text: text.trim(),
       language: language.trim() || "en",
@@ -29,7 +33,7 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
         .filter(Boolean),
       metadata: {
         platform: platform.trim() || "unspecified",
-        region: region.trim() || null,
+        region: region.trim(),
         actor_id: actorId.trim() || null,
       },
     };
@@ -121,11 +125,12 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
             className="input"
           />
         </InputField>
-        <InputField label="Region">
+        <InputField label="Region (city/district)">
           <input
             id="payload-region"
             value={region}
-            placeholder="Geo focus (optional)"
+            placeholder="Enter city or district (required)"
+            required
             onChange={(event) => setRegion(event.target.value)}
             className="input"
           />

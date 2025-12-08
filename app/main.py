@@ -21,6 +21,7 @@ from .federated.manager import LedgerManager
 from .federated.node import Node
 from .federated.ledger import Block
 from .federated.crypto import encrypt_data, decrypt_data
+from .heatmap import router as heatmap_router, record_point
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
@@ -38,6 +39,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Heatmap API
+app.include_router(heatmap_router)
+
 
 def get_app_settings() -> Settings:
     return settings
@@ -53,7 +57,26 @@ async def submit_content(
     payload: ContentIntake,
     _: Settings = Depends(get_app_settings),
 ) -> DetectionResult:
+    # Require region from intake
+    region = None
+    try:
+        region = (payload.metadata.region if payload.metadata else None)
+    except Exception:
+        region = None
+    if not region or not str(region).strip():
+        raise HTTPException(status_code=400, detail="Region (city/district) is required.")
+
     result = await orchestrator.process_intake(payload)
+
+    # Normalize composite score and record point for heatmap (non-blocking)
+    try:
+        score = result.composite_score
+        norm = int(round(score * 100)) if 0 <= score <= 1 else int(round(score))
+        norm = max(0, min(100, norm))
+        record_point(str(region).strip(), norm)
+    except Exception:
+        pass
+
     return result
 
 
