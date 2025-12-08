@@ -22,12 +22,14 @@ from .federated.node import Node
 from .federated.ledger import Block
 from .federated.crypto import encrypt_data, decrypt_data
 from .heatmap import router as heatmap_router, record_point
+from .auth.middleware import role_protection
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
 template_engine = Jinja2Templates(directory="templates")
 orchestrator = AnalysisOrchestrator()
-database = Database()
+database_l1 = Database()  # Write-enabled connection
+database_l2 = Database()  # Read-only connection (simulated)
 ledger = LedgerManager()
 node = Node()
 
@@ -65,9 +67,14 @@ async def dashboard(request: Request):
 
 @app.post("/api/v1/intake", response_model=DetectionResult)
 async def submit_content(
+    request: Request,
     payload: ContentIntake,
     _: Settings = Depends(get_app_settings),
-) -> DetectionResult:
+):
+    # Role check: Only allow users with 'upload' permission
+    user_id = await role_protection(request, "upload")
+    # Use L1 DB connection for all uploads
+    db_conn = database_l1
     # Require region from intake
     region = None
     try:
@@ -92,8 +99,11 @@ async def submit_content(
 
 
 @app.get("/api/v1/cases/{intake_id}", response_model=DetectionResult)
-async def get_case(intake_id: str) -> DetectionResult:
-    record = database.fetch_case(intake_id)
+async def get_case(request: Request, intake_id: str):
+    # Role check: Only allow users with 'dashboard' permission
+    user_id = await role_protection(request, "dashboard")
+    # Use L2 DB connection for dashboard/logs
+    record = database_l2.fetch_case(intake_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
     graph_snapshot = orchestrator.graph.summary()
