@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os
 from functools import lru_cache
 from typing import Dict, Optional, Tuple, Any
 
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from peft import PeftModel, PeftConfig
 
 # Keep your project config import
 try:
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class AIDetector:
     """
     Dual-model detector for AI-generated content:
-    1. AI vs Human detection using DeBERTa v3 LoRA (XOmar/ai_vs_human_detector_deberta_v3_lora)
+    1. AI vs Human detection using DeBERTa v3 Robust (XOmar/ai_vs_human_detector_deberta_v3_robust)
     2. Model Family detection for AI-generated text (XOmar/model_family_detector_deberta_v3_balanced)
     """
 
@@ -28,6 +28,14 @@ class AIDetector:
         self.settings = get_settings()
         self._ai_human_model = None
         self._ai_human_tokenizer = None
+        
+        # Skip model loading if disabled (e.g., in Docker blockchain nodes)
+        if os.getenv("DISABLE_AI_MODELS", "false").lower() == "true":
+            logger.warning("⚠️  AI model loading disabled via DISABLE_AI_MODELS env var")
+            self._family_model = None
+            self._family_tokenizer = None
+            self._device = "cpu"
+            return
         self._family_model = None
         self._family_tokenizer = None
         
