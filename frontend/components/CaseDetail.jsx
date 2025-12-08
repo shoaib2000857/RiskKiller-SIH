@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import Speedometer from "./Speedometer";
 import RadarChart from "./RadarChart";
 
 const riskBadgeClasses = {
@@ -127,9 +126,9 @@ export default function CaseDetail({
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Composite score
             </p>
-            <div className="mt-2">
+            <div className="mt-2 flex justify-end">
               {typeof caseData.composite_score === "number" ? (
-                <Speedometer value={caseData.composite_score} />
+                <ScoreDial value={caseData.composite_score} />
               ) : (
                 <p className="text-slate-400 text-sm">n/a</p>
               )}
@@ -622,6 +621,53 @@ function StatCard({ label, value }) {
       <p className="mt-2 text-lg font-semibold text-emerald-200">
         {value ?? "—"}
       </p>
+    </div>
+  );
+}
+
+function ScoreDial({ value }) {
+  const size = 60;
+  const strokeWidth = 5;
+  const center = size / 2;
+  const radius = center - strokeWidth;
+  const circumference = 2 * Math.PI * radius;
+
+  // We want the dial to go from 225 degrees to -45 degrees (a 270 degree arc)
+  const arcLength = circumference * 0.75;
+  const safeValue = Math.max(0, Math.min(value, 1));
+  const offset = arcLength - safeValue * arcLength;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform rotate-[135deg]">
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="rgba(255, 255, 255, 0.1)"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={arcLength}
+          strokeLinecap="round"
+        />
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="rgb(52 211 153)" // emerald-400
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={arcLength}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.3s ease" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-emerald-200 text-sm font-semibold">
+          {Math.round(safeValue * 100)}%
+        </span>
+      </div>
     </div>
   );
 }

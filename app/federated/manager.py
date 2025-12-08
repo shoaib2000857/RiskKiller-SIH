@@ -14,9 +14,8 @@ from .ledger import Block
 class LedgerManager:
     def __init__(self):
         settings = get_settings()
-        self.db_path = settings.database_url.replace("sqlite:///", "")
-        # Store ledger in a separate file to avoid contention with main app DB
-        self.ledger_db_path = str(Path(self.db_path).parent / "federated_ledger.db")
+        # For blockchain nodes, always store the ledger in ./data/federated_ledger.db
+        self.ledger_db_path = "data/federated_ledger.db"
         self._initialise()
 
     @contextmanager

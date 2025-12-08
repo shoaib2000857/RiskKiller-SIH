@@ -9,7 +9,7 @@ services:
       FEDERATED_NODES: "http://node1:8000,http://node2:8000,http://node3:8000,http://node4:8000"
       BLOCK_ENCRYPTION_KEY: "LULSnIHlBjTSfWDfqVl0kTV9qXUFN0EpGbynAB_34TM="
       APP_SECRET: "federated-secret-node1"
-      DATABASE_URL: "sqlite:///./data/app_node1.db"
+      DISABLE_AI_MODELS: "true"
     volumes:
       - ./data/node1:/app/data
     ports:
@@ -25,7 +25,7 @@ services:
       FEDERATED_NODES: "http://node1:8000,http://node2:8000,http://node3:8000,http://node4:8000"
       BLOCK_ENCRYPTION_KEY: "LULSnIHlBjTSfWDfqVl0kTV9qXUFN0EpGbynAB_34TM="
       APP_SECRET: "federated-secret-node2"
-      DATABASE_URL: "sqlite:///./data/app_node2.db"
+      DISABLE_AI_MODELS: "true"
     volumes:
       - ./data/node2:/app/data
     ports:
@@ -41,7 +41,7 @@ services:
       FEDERATED_NODES: "http://node1:8000,http://node2:8000,http://node3:8000,http://node4:8000"
       BLOCK_ENCRYPTION_KEY: "LULSnIHlBjTSfWDfqVl0kTV9qXUFN0EpGbynAB_34TM="
       APP_SECRET: "federated-secret-node3"
-      DATABASE_URL: "sqlite:///./data/app_node3.db"
+      DISABLE_AI_MODELS: "true"
     volumes:
       - ./data/node3:/app/data
     ports:
@@ -57,7 +57,7 @@ services:
       FEDERATED_NODES: "http://node1:8000,http://node2:8000,http://node3:8000,http://node4:8000"
       BLOCK_ENCRYPTION_KEY: "LULSnIHlBjTSfWDfqVl0kTV9qXUFN0EpGbynAB_34TM="
       APP_SECRET: "federated-secret-node4"
-      DATABASE_URL: "sqlite:///./data/app_node4.db"
+      DISABLE_AI_MODELS: "true"
     volumes:
       - ./data/node4:/app/data
     ports:

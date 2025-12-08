@@ -8,6 +8,7 @@ import CaseTable from "@/components/CaseTable";
 import CaseDetail from "@/components/CaseDetail";
 import Toast from "@/components/Toast";
 import FederatedBlockchain from "@/components/FederatedBlockchain";
+import ImageAnalyzer from "@/components/ImageAnalyzer";
 import WorldHeatmapLeaflet from "@/components/WorldHeatmapLeaflet";
 import {
   submitIntake,
@@ -310,6 +311,7 @@ export default function HomePage() {
                 onSelect={handleSelectCase}
               />
             </div>
+            <ImageAnalyzer />
             <EventsFeed events={events} />
           </div>
 
