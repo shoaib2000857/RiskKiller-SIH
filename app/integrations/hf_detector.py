@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from functools import lru_cache
 from typing import Dict, Optional, Tuple, Any
 
@@ -30,6 +31,12 @@ class AIDetector:
         self._ai_human_tokenizer = None
         self._family_model = None
         self._family_tokenizer = None
+        
+        # Skip model loading if disabled (e.g., in Docker blockchain nodes)
+        if os.getenv("DISABLE_AI_MODELS", "false").lower() == "true":
+            logger.warning("⚠️  AI model loading disabled via DISABLE_AI_MODELS env var")
+            self._device = "cpu"
+            return
         
         # Determine device automatically
         self._device = "cuda" if torch.cuda.is_available() else "cpu"

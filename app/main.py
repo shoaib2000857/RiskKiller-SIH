@@ -221,3 +221,50 @@ async def decrypt_federated_block(block_index: int):
         return {"block_index": block_index, "data": decrypted}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Decryption failed: {str(e)}")
+
+
+@app.post("/api/v1/federated/sync_chain")
+async def sync_chain_from_network():
+    """Sync local chain from a trusted peer node (fixes corrupted chains)."""
+    import requests
+    from dataclasses import asdict
+    
+    # Try to get the longest valid chain from peers
+    longest_chain = None
+    max_length = 0
+    
+    for node_url in node.nodes:
+        if node_url != node.my_url:
+            try:
+                resp = requests.get(f"{node_url}/api/v1/federated/chain", timeout=3)
+                data = resp.json()
+                peer_chain = [Block(**b) for b in data["chain"]]
+                
+                # Validate the peer's chain
+                if ledger.validate_chain(peer_chain) and len(peer_chain) > max_length:
+                    longest_chain = peer_chain
+                    max_length = len(peer_chain)
+            except Exception:
+                continue
+    
+    if longest_chain is None:
+        raise HTTPException(status_code=400, detail="No valid chains found in network")
+    
+    # Replace local chain with the longest valid one
+    # WARNING: This deletes and rebuilds the local blockchain!
+    import sqlite3
+    conn = sqlite3.connect(ledger.ledger_db_path)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM blocks")
+    conn.commit()
+    
+    for block in longest_chain:
+        ledger.save_block(block)
+    
+    conn.close()
+    
+    return {
+        "message": "Chain synced successfully",
+        "new_length": len(longest_chain),
+        "synced_from": "network_consensus"
+    }
