@@ -1,6 +1,6 @@
 import json
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
@@ -268,3 +268,41 @@ async def sync_chain_from_network():
         "new_length": len(longest_chain),
         "synced_from": "network_consensus"
     }
+
+
+@app.post("/api/v1/image/analyze")
+async def analyze_image(
+    file: UploadFile = File(...),
+    models: str = Form('genai')  # Default to AI detection only
+):
+    """Analyze an image using Sightengine API for AI-generation, gore, nudity, etc."""
+    import requests
+    
+    if not file:
+        raise HTTPException(status_code=400, detail="No image file provided")
+    
+    params = {
+        'models': models,  # Use models from form data
+        'api_user': settings.sightengine_api_user,
+        'api_secret': settings.sightengine_api_secret
+    }
+    
+    try:
+        # Read file content
+        contents = await file.read()
+        files = {'media': (file.filename, contents, file.content_type)}
+        
+        response = requests.post(
+            'https://api.sightengine.com/1.0/check.json',
+            files=files,
+            data=params,
+            timeout=30
+        )
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Sightengine API error")
+        
+        return response.json()
+    
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Image analysis failed: {str(e)}")
