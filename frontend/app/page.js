@@ -315,9 +315,7 @@ export default function HomePage() {
             <EventsFeed events={events} />
           </div>
 
-          <div className="mt-12">
-            <WorldHeatmapLeaflet />
-          </div>
+
 
 
           <div className="mt-12 grid grid-cols-1 gap-8 xl:grid-cols-[1.4fr]">
@@ -332,6 +330,9 @@ export default function HomePage() {
 
           <div className="mt-12">
             <FederatedBlockchain />
+          </div>
+          <div className="mt-12">
+            <WorldHeatmapLeaflet />
           </div>
         </section>
       </main>
