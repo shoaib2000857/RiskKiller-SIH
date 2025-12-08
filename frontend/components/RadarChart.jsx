@@ -53,7 +53,7 @@ export default function RadarChart({ breakdown = {} }) {
         key={`level-${levelIndex}`}
         points={points}
         fill="none"
-        stroke="rgba(255, 255, 255, 0.1)"
+        stroke="rgba(30, 41, 59, 0.25)" // slate-800 in light mode
         strokeWidth="1"
       />
     );
@@ -71,7 +71,7 @@ export default function RadarChart({ breakdown = {} }) {
         y1={center}
         x2={x}
         y2={y}
-        stroke="rgba(255, 255, 255, 0.15)"
+        stroke="rgba(30, 41, 59, 0.35)" // slate-800 stronger for visibility
         strokeWidth="1"
       />
     );
@@ -99,7 +99,7 @@ export default function RadarChart({ breakdown = {} }) {
         textAnchor="middle"
         dominantBaseline="middle"
         fontSize="10"
-        fill="rgba(255, 255, 255, 0.7)"
+        fill="rgba(15, 23, 42, 0.75)" // slate-900 for light mode
         className="pointer-events-none"
       >
         {signal.label}
