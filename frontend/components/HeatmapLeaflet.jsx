@@ -8,19 +8,43 @@ export default function HeatmapLeaflet() {
 	const heatLayerRef = useRef(null);
 	const leafletRef = useRef(null);
 	const latestMarkerRef = useRef(null);
-  const leafletCssRef = useRef(null);
+	const leafletCssRef = useRef(null);
+	const containerRef = useRef(null);
 
 	useEffect(() => {
 		let cleanup = () => {};
 		let intervalId = null;
+		let frameId = null;
+		let waitId = null;
+
+		const waitForVisibleContainer = () => {
+			const el = containerRef.current;
+			if (!el) return false;
+			const rects = el.getClientRects();
+			return rects && rects.length > 0 && el.offsetWidth > 0 && el.offsetHeight > 0;
+		};
 
 		async function init() {
 			// Avoid double initialization in dev/fast-refresh
 			if (mapRef.current) return;
+			const containerEl = containerRef.current;
+			// Wait for container to be present in DOM
+			if (!containerEl || !containerEl.parentNode) return;
+			if (!waitForVisibleContainer()) {
+				waitId = requestAnimationFrame(() => init().catch(() => {}));
+				return;
+			}
 			// Load Leaflet and plugin dynamically on client
 			const L = (await import("leaflet")).default;
 			await import("leaflet.heat");
 			leafletRef.current = L;
+
+			// Ensure default marker assets resolve to CDN paths (prevents 0.png/1.png 400s)
+			L.Icon.Default.mergeOptions({
+				iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+				iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+				shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+			});
 
 			// Add Leaflet CSS via CDN once
 			const existingCss = document.querySelector('link[href*="leaflet@1.9.4/dist/leaflet.css"]');
@@ -33,14 +57,11 @@ export default function HeatmapLeaflet() {
 			}
 
 			// Reset container if Leaflet previously attached
-			const existing = L.DomUtil.get("heatmap-container");
-			if (existing) {
-				if (existing._leaflet_id) existing._leaflet_id = null;
-				existing.innerHTML = "";
-			}
+			if (containerEl._leaflet_id) containerEl._leaflet_id = null;
+			containerEl.innerHTML = "";
 
 			// Initialize the map
-			const map = L.map("heatmap-container", {
+			const map = L.map(containerEl, {
 				center: [20.5937, 78.9629], // India centroid
 				zoom: 5,
 				worldCopyJump: false,
@@ -82,6 +103,7 @@ export default function HeatmapLeaflet() {
 
 			// Inject CSS for a pulsing marker
 			const styleTag = document.createElement("style");
+			styleTag.dataset.tdPulse = "true";
 			styleTag.innerHTML = `
 				@keyframes td-pulse {
 					0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
@@ -176,14 +198,22 @@ export default function HeatmapLeaflet() {
 				}
 				latestMarkerRef.current = null;
 				// Do not strip global Leaflet CSS indiscriminately; only remove our pulse style
-				const styleNodes = Array.from(document.querySelectorAll('style'))
-					.filter((s) => s.innerHTML.includes('td-pulse'));
+				const styleNodes = Array.from(document.querySelectorAll('style[data-td-pulse="true"]'));
 				styleNodes.forEach((s) => s.parentElement && s.parentElement.removeChild(s));
+				heatLayerRef.current = null;
+				mapRef.current = null;
+				leafletRef.current = null;
 			};
 		}
 
-		init();
-		return () => cleanup();
+		frameId = requestAnimationFrame(() => {
+			init().catch(() => {});
+		});
+		return () => {
+			if (frameId) cancelAnimationFrame(frameId);
+			if (waitId) cancelAnimationFrame(waitId);
+			cleanup();
+		};
 	}, []);
 
 	return (
@@ -193,6 +223,7 @@ export default function HeatmapLeaflet() {
 				<p className="text-xs text-slate-400">Auto-updates every 5 seconds</p>
 			</div>
 			<div
+				ref={containerRef}
 				id="heatmap-container"
 				style={{ height: 480, borderRadius: 16, overflow: "hidden" }}
 				className="w-full"

@@ -65,13 +65,35 @@ const SAMPLE_POINTS = [
 export default function WorldHeatmapLeaflet() {
   const mapRef = useRef(null);
   const heatLayerRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     let cleanup = () => {};
+    let frameId;
+    let waitId;
+
+    const waitForVisibleContainer = () => {
+      const el = containerRef.current;
+      if (!el) return false;
+      const rects = el.getClientRects();
+      return rects && rects.length > 0 && el.offsetWidth > 0 && el.offsetHeight > 0;
+    };
     async function init() {
       if (mapRef.current) return;
+      const containerEl = containerRef.current;
+      // Wait for the container to be mounted in the DOM tree
+      if (!containerEl || !containerEl.parentNode) return;
+      if (!waitForVisibleContainer()) {
+        waitId = requestAnimationFrame(() => init().catch(() => {}));
+        return;
+      }
       const L = (await import("leaflet")).default;
       await import("leaflet.heat");
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
       // Inject Leaflet CSS only once
       const existingCss = document.querySelector('link[href*="leaflet@1.9.4/dist/leaflet.css"]');
       if (!existingCss) {
@@ -89,7 +111,8 @@ export default function WorldHeatmapLeaflet() {
         existing.innerHTML = "";
       }
 
-      const map = L.map("world-heatmap-container", {
+      // Defensive: ensure container exists before initializing map
+      const map = L.map(containerEl, {
         center: [20, 0],
         zoom: 2,
         worldCopyJump: false, // keep a single world copy
@@ -164,6 +187,10 @@ export default function WorldHeatmapLeaflet() {
       // Load sample points
       heat.setLatLngs(SAMPLE_POINTS);
 
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch {}
+      }, 0);
+
       cleanup = () => {
         if (map) {
           map.off();
@@ -173,8 +200,14 @@ export default function WorldHeatmapLeaflet() {
         heatLayerRef.current = null;
       };
     }
-    init();
-    return () => cleanup();
+    frameId = requestAnimationFrame(() => {
+      init().catch(() => {});
+    });
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      if (waitId) cancelAnimationFrame(waitId);
+      cleanup();
+    };
   }, []);
 
   return (
@@ -184,6 +217,7 @@ export default function WorldHeatmapLeaflet() {
         <p className="text-xs text-slate-400">Blue → Green → Yellow → Red</p>
       </div>
       <div
+        ref={containerRef}
         id="world-heatmap-container"
         style={{ height: 520, borderRadius: 16, overflow: "hidden", touchAction: "none", position: "relative", zIndex: 10 }}
         className="w-full"
