@@ -126,7 +126,7 @@ export default function CaseDetail({
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Composite score
             </p>
-            <div className="mt-2 flex justify-end">
+            <div className="mt-2">
               {typeof caseData.composite_score === "number" ? (
                 <ScoreDial value={caseData.composite_score} />
               ) : (
