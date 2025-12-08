@@ -18,7 +18,7 @@ class DetectorEngine:
     Heuristic + ML-style scoring engine.
 
     IMPROVEMENTS:
-    - Linguistic Score: 
+    - Linguistic Score:
       - Enhanced lexical diversity with Moving-Average Type-Token Ratio (MATTR) approximation for better accuracy on short texts.
       - Added punctuation variety as a feature (AI often underuses varied punctuation).
       - Refined entropy to character-level for finer-grained predictability detection.
@@ -40,28 +40,33 @@ class DetectorEngine:
     FUNCTION_WORDS = {
         "the", "a", "an", "to", "of", "and", "in", "that", "is", "for",
         "on", "with", "as", "by", "at", "from", "but", "not", "or", "be",
-        "have", "do", "will", "would", "could", "should", "may", "might"
+        "have", "do", "will", "would", "could", "should", "may", "might",
     }
 
     # Expanded Behavioral Triggers
     URGENCY_WORDS = {
         "urgent", "now", "immediately", "alert", "warning", "critical",
         "expose", "truth", "share", "viral", "banned", "censored", "breaking",
-        "emergency", "must-see", "shocking", "revealed", "hidden","kill","murder",
-        "hit",""
+        "emergency", "must-see", "shocking", "revealed", "hidden", "kill",
+        "murder", "hit",
     }
 
     # Valence words for emotional manipulation (positive/negative extremes)
     HIGH_VALENCE_WORDS = {
-        "positive": {"amazing", "incredible", "brilliant", "genius", "hero"},
-        "negative": {"disaster", "catastrophe", "evil", "corrupt", "traitor", "fake"}
+        "positive": {"amazing", "incredible", "brilliant", "genius, ", "hero"},
+        "negative": {"disaster", "catastrophe", "evil", "corrupt", "traitor", "fake"},
     }
 
     # Expanded CTA phrases
     CTA_PATTERNS = [
-        r"click\s+(here|now|link)", r"sign\s+up", r"donate\s+(now|today)", 
-        r"forward\s+(this|to)", r"share\s+(this|now)", r"join\s+(us|today)",
-        r"act\s+(now|fast)", r"read\s+(more|full)"
+        r"click\s+(here|now|link)",
+        r"sign\s+up",
+        r"donate\s+(now|today)",
+        r"forward\s+(this|to)",
+        r"share\s+(this|now)",
+        r"join\s+(us|today)",
+        r"act\s+(now|fast)",
+        r"read\s+(more|full)",
     ]
 
     def __init__(self) -> None:
@@ -69,20 +74,27 @@ class DetectorEngine:
 
         # Refined weights (tuned: increased entropy/repetition emphasis; reduced TTR as it's noisy on short texts)
         self.weights = {
-            "avg_token_length": 0.4,  # Slightly reduced; AI can vary
-            "mattr": -1.2,  # New: MATTR for robust TTR
+            "avg_token_length": 0.4,        # Slightly reduced; AI can vary
+            "mattr": -1.2,                  # MATTR for robust TTR
             "sentence_length_var": 0.9,
             "burstiness": 1.1,
-            "entropy": -1.5,  # Increased: stronger AI signal
-            "repetition_rate": 2.0,  # Increased: key discriminator
-            "punctuation_variety": 0.7,  # New: humans use more variety
+            "entropy": -1.5,                # Increased: stronger AI signal
+            "repetition_rate": 2.0,         # Increased: key discriminator
+            "punctuation_variety": 0.7,     # Humans use more variety
             "readability_score": -0.5,
-            "vocabulary_richness": -0.8,  # New: low richness = AI uniformity
+            "vocabulary_richness": -0.8,    # Low richness = AI uniformity
             "uppercase_ratio": 0.5,
         }
         self.bias = -0.25  # Slightly less negative bias for balance
+
         self._ai_detector = get_ai_detector()
-        self._ollama_client = OllamaClient()
+
+        # Safely initialize Ollama client so the engine doesn't crash if Ollama isn't running
+        try:
+            self._ollama_client = OllamaClient()
+        except Exception as e:
+            logger.warning(f"Failed to initialize Ollama client: {e}")
+            self._ollama_client = None
 
     def detect(self, intake: ContentIntake) -> Tuple[float, str, DetectionBreakdown]:
         text = intake.text
@@ -97,9 +109,9 @@ class DetectorEngine:
 
         # 3. AI Detection (Hugging Face / Local Model)
         ai_result, model_family_result = self._ai_detection(text)
-        ai_score = None
-        model_family = None
-        model_family_confidence = None
+        ai_score: Optional[float] = None
+        model_family: Optional[str] = None
+        model_family_confidence: Optional[float] = None
 
         if ai_result:
             # Normalize confidence to probability
@@ -112,7 +124,6 @@ class DetectorEngine:
             if model_family_result:
                 model_family = model_family_result.get("family")
                 model_family_confidence = model_family_result.get("confidence")
-                # Add granular detail to heuristics
                 heuristics.append(
                     f"Fingerprint matches {model_family} family ({model_family_confidence:.1%} match)."
                 )
@@ -134,7 +145,7 @@ class DetectorEngine:
             base_prob=base_prob,
             behavior_score=behavior_score,
             ai_score=ai_score,
-            ollama_risk=ollama_risk
+            ollama_risk=ollama_risk,
         )
 
         classification = self._classify(composite)
@@ -145,11 +156,14 @@ class DetectorEngine:
             ai_probability=ai_score,
             model_family=model_family,
             model_family_confidence=model_family_confidence,
-            model_family_probabilities=model_family_result.get("all_probabilities") if model_family_result else None,
+            model_family_probabilities=(
+                model_family_result.get("all_probabilities") if model_family_result else None
+            ),
             ollama_risk=ollama_risk,
             stylometric_anomalies={k: round(v, 3) for k, v in features.items()},
             heuristics=heuristics,
         )
+
         return composite, classification, breakdown
 
     def _extract_features(self, text: str) -> Dict[str, float]:
@@ -157,7 +171,7 @@ class DetectorEngine:
         token_count = len(tokens) or 1
 
         # Sentence segmentation (improved: handle abbreviations better)
-        sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s', text)
+        sentences = re.split(r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s", text)
         sentences = [s.strip() for s in sentences if s.strip()]
         sentence_lengths = [len(self._tokenize(s)) for s in sentences]
         if not sentence_lengths:
@@ -184,7 +198,7 @@ class DetectorEngine:
         uppercase_tokens = sum(1 for t in tokens if t.isupper() and len(t) > 1)
         function_words = sum(1 for t in tokens if t.lower() in self.FUNCTION_WORDS)
 
-        # Repetition Rate (N-gram redundancy) - unchanged but now weighted higher
+        # Repetition Rate (N-gram redundancy)
         trigrams = list(zip(tokens, tokens[1:], tokens[2:]))
         if trigrams:
             unique_trigrams = len(set(trigrams))
@@ -192,22 +206,22 @@ class DetectorEngine:
         else:
             repetition_rate = 0.0
 
-        # Character-level Shannon Entropy (finer: AI smooths chars too)
+        # Character-level Shannon Entropy
         char_counts = Counter(text)
         char_probs = [count / len(text) for count in char_counts.values()] if text else []
         char_entropy = -sum(p * math.log2(p) for p in char_probs) if char_probs else 0.0
 
-        # Readability Proxy (ARI Approximation) - unchanged
+        # Readability Proxy (ARI Approximation)
         char_count = sum(len(t) for t in tokens)
         avg_chars_per_word = char_count / token_count
         avg_words_per_sent = token_count / max(len(sentences), 1)
         readability = (4.71 * avg_chars_per_word) + (0.5 * avg_words_per_sent) - 21.43
 
-        # New: Punctuation Variety (normalized diversity of ! ? . , ; : etc.)
+        # Punctuation Variety (normalized diversity of ! ? . , ; : etc.)
         punct_types = set(re.findall(r'[!?.;,:\-–—()"]', text))
         punct_variety = len(punct_types) / 8.0  # Max 8 common types
 
-        # New: Vocabulary Richness (HHI proxy: sum (freq^2) normalized; lower = more uniform/AI)
+        # Vocabulary Richness (HHI proxy: sum (freq^2) normalized; lower = more uniform/AI)
         freq_squares = sum((count / token_count) ** 2 for count in counts.values())
         vocabulary_richness = 1.0 - freq_squares  # 1 - HHI, higher = richer
 
@@ -244,13 +258,13 @@ class DetectorEngine:
         heuristics: List[str] = []
 
         # Linguistic Heuristics (updated thresholds based on new features)
-        if features.get("repetition_rate", 0) > 0.12:  # Lowered threshold for sensitivity
+        if features.get("repetition_rate", 0) > 0.12:
             heuristics.append("High phrase repetition detected (characteristic of cheaper LLMs).")
 
-        if features.get("entropy", 4.0) < 3.0:  # Adjusted for char-level (typically 3-5 bits)
+        if features.get("entropy", 4.0) < 3.0:
             heuristics.append("Low character entropy suggests machine-generated predictability.")
 
-        if features.get("mattr", 0) < 0.45:  # MATTR threshold (~0.5 human avg)
+        if features.get("mattr", 0) < 0.45:
             heuristics.append("Low moving-average lexical diversity.")
 
         if features.get("punctuation_variety", 0) < 0.3:
@@ -260,15 +274,18 @@ class DetectorEngine:
             heuristics.append("Uniform vocabulary distribution (lacks human richness).")
 
         # Structural Heuristics
-        if features.get("burstiness", 0) < 0.15:  # Tightened
+        if features.get("burstiness", 0) < 0.15:
             heuristics.append("Monotonous sentence structure (robotic cadence).")
         elif features.get("burstiness", 0) > 0.85:
-             heuristics.append("Erratic structure consistent with obfuscation attempts.")
+            heuristics.append("Erratic structure consistent with obfuscation attempts.")
 
         # Behavioral Heuristics (Metadata)
-        if intake.metadata and intake.metadata.platform in self.SUSPECT_PLATFORMS:
-            platform_boost = 0.25 if "telegram-channel" in intake.metadata.platform else 0.12
-            heuristics.append(f"Originating platform '{intake.metadata.platform}' is flagged as high-risk (+{platform_boost}).")
+        if intake.metadata and getattr(intake.metadata, "platform", None) in self.SUSPECT_PLATFORMS:
+            platform = intake.metadata.platform
+            platform_boost = 0.25 if "telegram-channel" in platform else 0.12
+            heuristics.append(
+                f"Originating platform '{platform}' is flagged as high-risk (+{platform_boost})."
+            )
 
         if intake.tags and any(tag in self.HIGH_RISK_TAGS for tag in intake.tags):
             heuristics.append("Content tags align with known threat actor narratives.")
@@ -294,45 +311,70 @@ class DetectorEngine:
         text_lower = intake.text.lower()
         text_len = len(text_lower)
 
-        # 1. Geo-Political Context (unchanged)
+        # 1. Geo-Political Context
         if intake.metadata:
-            region = (intake.metadata.region or "").upper()
+            region = (getattr(intake.metadata, "region", "") or "").upper()
             if region in {"RU", "IR", "KP", "CN"}:
                 boost += 0.15
 
         # 2. Urgency & Emotional Manipulation (Enhanced)
         urgency_hits = sum(1 for word in self.URGENCY_WORDS if word in text_lower)
-        valence_hits = sum(1 for group in self.HIGH_VALENCE_WORDS.values() for word in group if word in text_lower)
-        exclamations = text_lower.count('!') + text_lower.count('?')  # Rhetorical questions/excitement
-        emotional_boost = min((urgency_hits + valence_hits + exclamations / 4.0) / max(text_len / 120, 1), 0.25)  # Loosened normalization
+        valence_hits = sum(
+            1
+            for group in self.HIGH_VALENCE_WORDS.values()
+            for word in group
+            if word in text_lower
+        )
+        exclamations = text_lower.count("!") + text_lower.count("?")
+
+        emotional_boost = min(
+            (urgency_hits + valence_hits + exclamations / 4.0) / max(text_len / 120, 1),
+            0.25,
+        )
         if emotional_boost > 0.06:
             boost += emotional_boost
-            heuristics.append(f"Emotional manipulation via {urgency_hits} urgency terms, {valence_hits} valence words, and {exclamations} exclamations.")
+            heuristics.append(
+                f"Emotional manipulation via {urgency_hits} urgency terms, "
+                f"{valence_hits} valence words, and {exclamations} exclamations."
+            )
 
         # 3. Call To Action (CTA) Detection (Regex-enhanced)
         cta_hits = sum(re.search(pattern, text_lower) is not None for pattern in self.CTA_PATTERNS)
         if cta_hits > 0:
-            cta_boost = min(cta_hits * 0.1, 0.2)  # Loosened
+            cta_boost = min(cta_hits * 0.1, 0.2)
             boost += cta_boost
-            heuristics.append(f"Detected {cta_hits} call-to-action patterns (common in influence ops).")
+            heuristics.append(
+                f"Detected {cta_hits} call-to-action patterns (common in influence ops)."
+            )
 
         # 4. Aggressive Formatting (length-normalized)
         upper_ratio = features.get("uppercase_ratio", 0)
-        if upper_ratio > 0.08:  # Loosened threshold
+        if upper_ratio > 0.08:
             boost += min(upper_ratio * 2.5, 0.15)
             heuristics.append("Aggressive use of capitalization.")
 
-        # 5. Narrative Alignment & Coherence (New: Simple topic drift proxy)
-        if len(sentences := re.split(r'[.!?]+', text_lower)) > 3:
-            sent_keywords = [set(re.findall(r'\b[a-z]{4,}\b', s)) for s in sentences]
-            overlaps = sum(len(k1 & k2) / max(len(k1), len(k2) or 1) for i, k1 in enumerate(sent_keywords) for k2 in sent_keywords[i+1:])
-            coherence = overlaps / (len(sentences) - 1)
-            if coherence < 0.35:  # Loosened threshold
+        # 5. Narrative Alignment & Coherence (topic drift proxy)
+        sentences = re.split(r"[.!?]+", text_lower)
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) > 3:
+            sent_keywords = [set(re.findall(r"\b[a-z]{4,}\b", s)) for s in sentences]
+
+            overlaps = 0.0
+            count_pairs = 0
+            for i, k1 in enumerate(sent_keywords):
+                for k2 in sent_keywords[i + 1 :]:
+                    if k1 or k2:
+                        overlaps += len(k1 & k2) / max(len(k1), len(k2) or 1)
+                        count_pairs += 1
+
+            coherence = overlaps / count_pairs if count_pairs else 1.0
+            if coherence < 0.35:
                 boost += 0.1
-                heuristics.append("Low narrative coherence (potential topic drift in disinfo).")
+                heuristics.append(
+                    "Low narrative coherence (potential topic drift in disinfo)."
+                )
 
         # Dynamic cap based on text length (short texts less reliable)
-        # Ensure a baseline if any heuristic fired
         if boost > 0.0:
             boost = max(boost, 0.1)
 
@@ -341,21 +383,25 @@ class DetectorEngine:
 
     def _normalize_features(self, features: Dict[str, float]) -> Dict[str, float]:
         """Normalize raw stats to 0-1 range for linear scoring. Use sigmoid for smoother bounds."""
-        def sigmoid_norm(x, scale=1.0):
+
+        def sigmoid_norm(x: float, scale: float = 1.0) -> float:
             return 1 / (1 + math.exp(-scale * (x - 0.5)))  # Centered sigmoid
 
         return {
-            "avg_token_length": min(features.get("avg_token_length", 0) / 8.0, 1.5),
-            "mattr": features.get("mattr", 0),  # Already 0-1
-            "sentence_length_var": sigmoid_norm(features.get("sentence_length_var", 0) / 50.0, scale=2.0),
-            "burstiness": features.get("burstiness", 0),  # Already normalized
+            "avg_token_length": min(features.get("avg_token_length", 0) / 8.0, 1.0),
+            "mattr": features.get("mattr", 0),
+            "sentence_length_var": sigmoid_norm(
+                features.get("sentence_length_var", 0) / 50.0,
+                scale=2.0,
+            ),
+            "burstiness": features.get("burstiness", 0),
             "function_word_ratio": min(features.get("function_word_ratio", 0) * 2.0, 1.0),
             "uppercase_ratio": min(features.get("uppercase_ratio", 0) * 3.0, 1.0),
             "repetition_rate": min(features.get("repetition_rate", 0) * 5.0, 1.0),
-            "entropy": min(features.get("entropy", 0) / 5.0, 1.0),  # Char entropy ~3-5
+            "entropy": min(features.get("entropy", 0) / 5.0, 1.0),
             "readability_score": min(features.get("readability_score", 0) / 20.0, 1.0),
-            "punctuation_variety": features.get("punctuation_variety", 0),  # Already 0-1
-            "vocabulary_richness": features.get("vocabulary_richness", 0),  # Already 0-1
+            "punctuation_variety": features.get("punctuation_variety", 0),
+            "vocabulary_richness": features.get("vocabulary_richness", 0),
         }
 
     def _blend_scores(
@@ -363,7 +409,7 @@ class DetectorEngine:
         base_prob: float,
         behavior_score: float,
         ai_score: Optional[float],
-        ollama_risk: Optional[float] = None
+        ollama_risk: Optional[float] = None,
     ) -> float:
         """
         Weighted ensemble of all signals.
@@ -371,20 +417,17 @@ class DetectorEngine:
         Ollama risk replaces behavioral score when available.
         """
         # Start with the base linguistic score
-        composite = base_prob * 0.35  # Slightly higher base weight
+        composite = base_prob * 0.1
 
         # Use Ollama semantic risk if available, otherwise fall back to behavioral score
         if ollama_risk is not None:
-            # Ollama provides semantic/contextual risk analysis
-            composite += ollama_risk * 0.25
+            composite += ollama_risk * 0.1
         else:
-            # Behavioral score is additive (risk booster)
-            composite += behavior_score * 0.25  # Increased behavioral influence
+            composite += behavior_score * 0.1
 
         # Integrate AI Model (The expert)
         if ai_score is not None:
-            # High trust in the DeBERTa model
-            weight = 0.45  # Slightly reduced to allow more blend
+            weight = 0.8
             composite = (composite * (1 - weight)) + (ai_score * weight)
 
         return max(0.0, min(1.0, composite))
@@ -392,7 +435,7 @@ class DetectorEngine:
     @staticmethod
     def _tokenize(text: str) -> List[str]:
         # Improved tokenizer that handles contractions slightly better
-        return re.findall(r"\b[\w'-]+\b", text)  # Added hyphen for compounds
+        return re.findall(r"\b[\w'-]+\b", text)
 
     @staticmethod
     def _calculate_burstiness(sentence_lengths: List[int]) -> float:
@@ -406,7 +449,6 @@ class DetectorEngine:
         stdev = statistics.stdev(sentence_lengths)
         if mean == 0:
             return 0.0
-        # Coefficient of variation (CV)
         return min(stdev / mean, 1.0)
 
     @staticmethod
@@ -414,14 +456,18 @@ class DetectorEngine:
         """Approximate Moving-Average Type-Token Ratio (MATTR) for robust diversity."""
         if len(tokens) < window:
             return len(set(tokens)) / len(tokens) if tokens else 0.0
+
         total_types = 0.0
         num_windows = 0
-        for i in range(0, len(tokens), window // 2):  # Overlapping windows
-            window_tokens = tokens[i:i + window]
+        step = max(window // 2, 1)
+
+        for i in range(0, len(tokens), step):  # Overlapping windows
+            window_tokens = tokens[i : i + window]
             if window_tokens:
                 types = len(set(window_tokens))
                 total_types += types / len(window_tokens)
                 num_windows += 1
+
         return total_types / num_windows if num_windows else 0.0
 
     @staticmethod
@@ -439,7 +485,7 @@ class DetectorEngine:
         return "low-risk"
 
     def _ai_detection(self, text: str) -> Tuple[Optional[Dict], Optional[Dict]]:
-        if not self._ai_detector.available:
+        if not getattr(self._ai_detector, "available", False):
             return None, None
         return self._ai_detector.analyze_text(text)
 
@@ -448,6 +494,8 @@ class DetectorEngine:
         Use Ollama for semantic/contextual risk assessment.
         Returns risk score 0.0-1.0 if available, None otherwise.
         """
+        if self._ollama_client is None:
+            return None
         try:
             return self._ollama_client.risk_assessment(text)
         except Exception as e:
