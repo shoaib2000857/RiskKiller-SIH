@@ -11,7 +11,7 @@ export default function ImageAnalyzer() {
 
   const featureDefaults = {
     genai: true, // AI-generated detection (default ON)
-    nudity: false,
+    violence: false,
     gore: false,
     offensive: false,
     selfHarm: false,
@@ -47,7 +47,7 @@ export default function ImageAnalyzer() {
 
     const enabledModels = [];
     if (features.genai) enabledModels.push("genai");
-    if (features.nudity) enabledModels.push("nudity-2.1");
+    if (features.violence) enabledModels.push("violence");
     if (features.gore) enabledModels.push("gore-2.0");
     if (features.offensive) enabledModels.push("offensive-2.0");
     if (features.selfHarm) enabledModels.push("self-harm");
@@ -114,7 +114,7 @@ export default function ImageAnalyzer() {
       <header className="mb-5">
         <h2 className="text-2xl font-semibold text-white">Image Content Analyzer</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Detect AI-generated images, gore, nudity, offensive content, and more
+          Detect AI-generated images, gore, violence, offensive content, and more
         </p>
       </header>
 
@@ -155,16 +155,16 @@ export default function ImageAnalyzer() {
               <span className="block"> AI Detection</span>
             </button>
 
-            {/* Nudity */}
+            {/* Violence */}
             <button
-              onClick={() => toggleFeature('nudity')}
+              onClick={() => toggleFeature('violence')}
               className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
-                features.nudity
+                features.violence
                   ? 'border-amber-500/50 bg-amber-500/20 text-amber-300'
                   : 'border-white/10 bg-slate-800/50 text-slate-400 hover:border-white/20'
               }`}
             >
-              <span className="block"> Nudity</span>
+              <span className="block"> Violence</span>
             </button>
 
             {/* Gore */}
@@ -313,30 +313,21 @@ export default function ImageAnalyzer() {
               </div>
             )}
 
-            {/* Nudity Detection */}
-            {activeFeatures.nudity && results.nudity && (
+            {/* Violence Detection */}
+            {activeFeatures.violence && results.violence?.prob !== undefined && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-amber-300">Nudity Score</span>
-                  <span className={`text-lg font-bold ${getRiskLevel(1 - (results.nudity.none || 0)).color}`}>
-                    {((1 - (results.nudity.none || 0)) * 100).toFixed(1)}%
+                  <span className="text-sm font-medium text-amber-300">Violence Content</span>
+                  <span className={`text-lg font-bold ${getRiskLevel(results.violence.prob).color}`}>
+                    {(results.violence.prob * 100).toFixed(1)}%
                   </span>
                 </div>
-                {/* Show top categories if risk is present */}
-                {(1 - (results.nudity.none || 0)) > 0.01 && (
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-amber-200/70">
-                    {Object.entries(results.nudity)
-                      .filter(([key, val]) => key !== 'none' && key !== 'context' && typeof val === 'number' && val > 0.01)
-                      .sort(([, a], [, b]) => b - a)
-                      .slice(0, 4)
-                      .map(([key, val]) => (
-                        <div key={key} className="flex justify-between">
-                          <span className="capitalize">{key.replace(/_/g, ' ')}</span>
-                          <span>{(val * 100).toFixed(0)}%</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className="h-full bg-amber-500"
+                    style={{ width: `${results.violence.prob * 100}%` }}
+                  />
+                </div>
               </div>
             )}
 
