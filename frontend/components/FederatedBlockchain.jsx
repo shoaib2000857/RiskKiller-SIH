@@ -68,7 +68,8 @@ export default function FederatedBlockchain() {
   const decryptBlock = async (blockIndex) => {
     setDecrypting(prev => ({ ...prev, [blockIndex]: true }));
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/federated/decrypt_block/${blockIndex}`);
+      const nodeUrl = NODE_URLS[selectedNode];
+      const res = await fetch(`${nodeUrl}/api/v1/federated/decrypt_block/${blockIndex}`);
       if (!res.ok) throw new Error("Failed to decrypt block");
       const data = await res.json();
       setDecryptedData(prev => ({ ...prev, [blockIndex]: data.data }));
@@ -200,17 +201,19 @@ export default function FederatedBlockchain() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => toggleBlockData(block.index)}
-                      disabled={decrypting[block.index]}
-                      className="rounded-lg border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 disabled:opacity-50 transition-colors"
-                    >
-                      {decrypting[block.index] 
-                        ? "Decrypting..." 
-                        : decryptedData[block.index] 
-                          ? "Hide Data" 
-                          : "View Data"}
-                    </button>
+                    {block.index !== 0 && (
+                      <button
+                        onClick={() => toggleBlockData(block.index)}
+                        disabled={decrypting[block.index]}
+                        className="rounded-lg border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 disabled:opacity-50 transition-colors"
+                      >
+                        {decrypting[block.index] 
+                          ? "Decrypting..." 
+                          : decryptedData[block.index] 
+                            ? "Hide Data" 
+                            : "View Data"}
+                      </button>
+                    )}
                     <div className="text-right">
                       <p className="text-xs uppercase tracking-wide text-slate-400">Hash</p>
                       <p className="mt-0.5 font-mono text-[10px] text-emerald-200">

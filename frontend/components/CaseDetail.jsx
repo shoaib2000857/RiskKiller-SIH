@@ -569,20 +569,7 @@ export default function CaseDetail({
             />
           </label>
 
-          <label className="inline-flex items-center gap-3 text-xs text-slate-300">
-            <input
-              type="checkbox"
-              checked={formState.include_personal_data}
-              onChange={(event) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  include_personal_data: event.target.checked,
-                }))
-              }
-              className="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-400 focus:ring-emerald-500"
-            />
-            Include personally identifiable metadata
-          </label>
+        
 
           <button
             type="submit"
