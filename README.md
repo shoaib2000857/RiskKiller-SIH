@@ -2,7 +2,13 @@
 
 **Prototype platform to detect and mitigate malign information operations powered by large language models.**
 
-Combines heuristics, Hugging Face detectors, optional Ollama-assisted analysis, threat graph intelligence, provenance checks, and federated sharing scaffolding.
+Combines advanced AI detection with multi-layered analysis:
+- 🤖 **Ollama Semantic Analysis** (40% weight) - Deep contextual risk assessment using local LLMs
+- 🔍 **Hugging Face AI Detection** (35% weight) - State-of-the-art AI-generated content detection
+- 🎯 **Behavioral Analysis** (15% weight) - Metadata, urgency, and manipulation tactics
+- 📊 **Stylometric Analysis** (10% weight) - Linguistic fingerprinting and patterns
+
+Plus threat graph intelligence, provenance checks, and federated sharing scaffolding.
 
 ---
 
@@ -49,7 +55,30 @@ sudo dnf install -y python3.11 python3.11-venv
 
 ## 🚀 Quick Start
 
-### Backend (FastAPI)
+### 1. Install Ollama (Required for Semantic Analysis)
+
+```bash
+# Linux
+curl -fsSL https://ollama.com/install.sh | sh
+
+# macOS
+brew install ollama
+
+# Windows - Download from https://ollama.com/download/windows
+```
+
+Start Ollama and download the model:
+```bash
+# Start Ollama server
+ollama serve
+
+# In another terminal, download the recommended model
+ollama pull llama3.2:3b
+```
+
+📖 **Detailed Ollama setup**: See [docs/OLLAMA_SETUP.md](docs/OLLAMA_SETUP.md)
+
+### 2. Backend (FastAPI)
 
 ```bash
 # Clone the repo
@@ -63,6 +92,9 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
 # Install dependencies
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+
+# Create .env file (copy from example)
+cp .env.example .env
 
 # Start the backend server
 uvicorn app.main:app --reload

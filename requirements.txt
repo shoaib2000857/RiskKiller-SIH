@@ -2,6 +2,7 @@
 fastapi==0.104.1
 uvicorn==0.23.2
 pydantic==2.12.5
+pydantic-settings==2.12.0
 httpx==0.25.0
 
 # Application Dependencies
@@ -9,60 +10,22 @@ networkx==3.1
 python-dotenv==1.0.0
 jinja2==3.1.2
 requests==2.31.0
-
-# Cryptography for Federated Blockchain
-cryptography==41.0.7
-
-# Machine Learning
-transformers
-torch
-sentencepiece
-
-# Testing
-pytest==7.4.4
-
-# Server-Sent Events for real-time updates
-sse-starlette==1.6.5
-# jinja2==3.1.2
-requests==2.31.0
-
-# Cryptography for Federated Blockchain
-cryptography==41.0.7
-
-# Machine Learning
-transformers
-torch
-sentencepiece
-
-# Testing
-pytest==7.4.4
-
-# Server-Sent Events for real-time updates
-sse-starlette==1.6.5
-peft
 python-multipart==0.0.20
-pydantic-settings==2.12.0
 
+# Cryptography for Federated Blockchain
+cryptography==41.0.7
 
-# fastapi==0.104.1
-# uvicorn==0.23.2
-# pydantic==1.10.13
-# networkx==3.1
-# python-dotenv==1.0.0
-# jinja2==3.1.2
-# transformers
-# torch
-# sentencepiece
-# pytest==7.4.4
+# Machine Learning & AI Detection
+transformers
+torch
+sentencepiece
+peft
 
+# Ollama Python Client
+ollama==0.4.2
 
-# fastapi
-# uvicorn
-# pydantic
-# networkx
-# python-dotenv
-# jinja2
-# transformers
-# torch
-# sentencepiece
-# pytest
+# Testing
+pytest==7.4.4
+
+# Server-Sent Events for real-time updates
+sse-starlette==1.6.5

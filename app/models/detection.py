@@ -412,23 +412,63 @@ class DetectorEngine:
         ollama_risk: Optional[float] = None,
     ) -> float:
         """
-        Weighted ensemble of all signals.
-        If AI model is available, it carries the most weight.
-        Ollama risk replaces behavioral score when available.
+        Weighted ensemble of all signals with HIGH priority to Ollama and HF detections.
+        
+        Scoring hierarchy:
+        1. Ollama (semantic risk): 40% weight - Deep semantic understanding of content
+        2. HF AI Detection: 35% weight - State-of-the-art AI generation detection
+        3. Behavioral Analysis: 15% weight - Metadata, urgency, manipulation tactics
+        4. Stylometric Base: 10% weight - Linguistic fingerprinting
+        
+        When both Ollama and HF are available, they dominate (75% combined).
+        When only one is available, it still carries significant weight.
         """
-        # Start with the base linguistic score
-        composite = base_prob * 0.1
-
-        # Use Ollama semantic risk if available, otherwise fall back to behavioral score
-        if ollama_risk is not None:
-            composite += ollama_risk * 0.1
-        else:
-            composite += behavior_score * 0.1
-
-        # Integrate AI Model (The expert)
+        weights = {
+            'stylometric': 0.10,
+            'behavioral': 0.15,
+            'ai_detection': 0.35,
+            'ollama': 0.40,
+        }
+        
+        # Track which signals are available
+        available_signals = []
+        composite = 0.0
+        total_weight_used = 0.0
+        
+        # Add stylometric score (always available)
+        composite += base_prob * weights['stylometric']
+        total_weight_used += weights['stylometric']
+        available_signals.append('stylometric')
+        
+        # Add behavioral score (always available)
+        composite += behavior_score * weights['behavioral']
+        total_weight_used += weights['behavioral']
+        available_signals.append('behavioral')
+        
+        # Add HF AI detection if available (HIGH PRIORITY)
         if ai_score is not None:
-            weight = 0.8
-            composite = (composite * (1 - weight)) + (ai_score * weight)
+            composite += ai_score * weights['ai_detection']
+            total_weight_used += weights['ai_detection']
+            available_signals.append('ai_detection')
+        
+        # Add Ollama semantic risk if available (HIGHEST PRIORITY)
+        if ollama_risk is not None:
+            composite += ollama_risk * weights['ollama']
+            total_weight_used += weights['ollama']
+            available_signals.append('ollama')
+        
+        # If some signals are missing, redistribute their weight proportionally
+        # This ensures we still get 0-1 range even with missing signals
+        if total_weight_used < 1.0:
+            # Redistribute missing weight proportionally among available signals
+            redistribution_factor = 1.0 / total_weight_used
+            composite *= redistribution_factor
+        
+        logger.debug(
+            f"Score blending: base={base_prob:.2f}, behavior={behavior_score:.2f}, "
+            f"ai={ai_score or 0:.2f}, ollama={ollama_risk or 0:.2f} -> "
+            f"composite={composite:.2f} (signals: {', '.join(available_signals)})"
+        )
 
         return max(0.0, min(1.0, composite))
 
