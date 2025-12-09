@@ -175,31 +175,79 @@ class AnalysisOrchestrator:
         # Publish to federated blockchain if enabled
         if self.ledger and self.node:
             try:
-                chain = self.ledger.get_chain()
-                prev_block = chain[-1]
-                
-                federated_payload = {
-                    "type": "intelligence_sharing",
-                    "package_id": package.package_id,
-                    "destination": request.destination,
-                    "classification": record["classification"],
-                    "composite_score": record["composite_score"],
-                    "timestamp": package.created_at.isoformat(),
-                    "policy_tags": policy_tags
+                # Map destination to node URL (hardcoded to match NODE_URLS in frontend)
+                destination_map = {
+                    "USA": "http://localhost:8001",
+                    "EU": "http://localhost:8002",
+                    "IN": "http://localhost:8003",
+                    "AUS": "http://localhost:8004",
                 }
                 
-                encrypted_data = encrypt_data(federated_payload)
-                new_block = Block.create_new(
-                    index=len(chain),
-                    data_encrypted=encrypted_data,
-                    previous_hash=prev_block.hash
-                )
+                destination_url = destination_map.get(request.destination)
                 
-                self.ledger.save_block(new_block)
-                self.node.broadcast_block(new_block)
+                if destination_url:
+                    # Get the chain from the destination node to append the block there
+                    try:
+                        import requests
+                        
+                        # Fetch destination node's chain
+                        chain_response = requests.get(f"{destination_url}/api/v1/federated/chain", timeout=5.0)
+                        if chain_response.status_code == 200:
+                            dest_chain_data = chain_response.json()
+                            dest_chain = dest_chain_data.get("chain", [])
+                            
+                            # Create block with proper index for destination node
+                            prev_hash = dest_chain[-1]["hash"] if dest_chain else "0"
+                            block_index = len(dest_chain)
+                            
+                            federated_payload = {
+                                "type": "intelligence_sharing",
+                                "package_id": package.package_id,
+                                "destination": request.destination,
+                                "intake_id": request.intake_id,
+                                "classification": record["classification"],
+                                "composite_score": record["composite_score"],
+                                "timestamp": package.created_at.isoformat(),
+                                "policy_tags": policy_tags
+                            }
+                            
+                            encrypted_data = encrypt_data(federated_payload)
+                            new_block = Block.create_new(
+                                index=block_index,
+                                data_encrypted=encrypted_data,
+                                previous_hash=prev_hash
+                            )
+                            
+                            # Send block only to the destination node
+                            block_response = requests.post(
+                                f"{destination_url}/api/v1/federated/receive_block",
+                                json={
+                                    "index": new_block.index,
+                                    "timestamp": new_block.timestamp,
+                                    "data_encrypted": new_block.data_encrypted,
+                                    "previous_hash": new_block.previous_hash,
+                                    "hash": new_block.hash,
+                                    "signature": new_block.signature,
+                                    "public_key": new_block.public_key,
+                                },
+                                timeout=5.0
+                            )
+                            
+                            if block_response.status_code == 200:
+                                print(f"✓ Block sent successfully to {request.destination} node")
+                            else:
+                                print(f"✗ Failed to send block to {request.destination}: {block_response.status_code} - {block_response.text}")
+                        else:
+                            print(f"✗ Failed to fetch chain from {request.destination}: {chain_response.status_code}")
+                    except requests.RequestException as e:
+                        print(f"✗ Network error sending block to destination node: {e}")
+                    except Exception as e:
+                        print(f"✗ Error sending block to destination node: {e}")
+                else:
+                    print(f"✗ Unknown destination: {request.destination}")
             except Exception as e:
                 # Log error but don't fail the sharing request
-                print(f"Failed to publish to blockchain: {e}")
+                print(f"✗ Failed to publish to blockchain: {e}")
         
         return package
 

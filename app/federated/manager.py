@@ -117,3 +117,40 @@ class LedgerManager:
         if not verify_signature(block.public_key, block.payload(), block.signature):
             return False
         return True
+
+    def reset_chain(self):
+        """Reset the blockchain to only the genesis block."""
+        with self._cursor() as cur:
+            # Delete all blocks except genesis (index 0)
+            cur.execute("DELETE FROM blocks WHERE idx > 0")
+
+    def reset_chain(self):
+        """Delete all blocks and reinitialize with genesis block only."""
+        with self._cursor() as cur:
+            cur.execute("DELETE FROM blocks")
+            # Recreate genesis block
+            genesis = Block(
+                index=0,
+                timestamp=0.0,
+                data_encrypted="GENESIS_BLOCK_V1.0",
+                previous_hash="0" * 64,
+                public_key="GENESIS_KEY",
+                signature="GENESIS_SIGNATURE",
+                hash="",
+            )
+            genesis.hash = sha256(genesis.payload())
+            cur.execute(
+                """
+                INSERT INTO blocks (idx, ts, data_encrypted, previous_hash, hash, signature, public_key)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    genesis.index,
+                    genesis.timestamp,
+                    genesis.data_encrypted,
+                    genesis.previous_hash,
+                    genesis.hash,
+                    genesis.signature,
+                    genesis.public_key,
+                ),
+            )

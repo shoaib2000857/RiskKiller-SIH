@@ -20,7 +20,7 @@ from .storage.database import Database
 from .federated.manager import LedgerManager
 from .federated.node import Node
 from .federated.ledger import Block
-from .federated.crypto import encrypt_data, decrypt_data
+from .federated.crypto import encrypt_data, decrypt_data, sha256
 from .heatmap import router as heatmap_router, record_point
 from .auth.middleware import role_protection
 
@@ -187,7 +187,6 @@ async def add_federated_block(payload: dict):
 async def receive_federated_block(block_data: dict):
     """Receive and validate a block from a peer node."""
     chain = ledger.get_chain()
-    prev_block = chain[-1]
     
     incoming_block = Block(
         index=block_data["index"],
@@ -199,8 +198,23 @@ async def receive_federated_block(block_data: dict):
         signature=block_data["signature"]
     )
     
-    if not ledger.validate_block(incoming_block, prev_block):
-        raise HTTPException(status_code=400, detail="Block validation failed")
+    # Check if block already exists
+    if incoming_block.index < len(chain):
+        existing_block = chain[incoming_block.index]
+        if existing_block.hash == incoming_block.hash:
+            return {"message": "Block already exists"}
+        else:
+            raise HTTPException(status_code=400, detail="Block index conflict")
+    
+    # Validate block integrity (hash and signature)
+    if incoming_block.hash != sha256(incoming_block.payload()):
+        raise HTTPException(status_code=400, detail="Invalid block hash")
+    
+    # For new blocks, check if it follows the previous block
+    if incoming_block.index == len(chain):
+        prev_block = chain[-1]
+        if incoming_block.previous_hash != prev_block.hash:
+            raise HTTPException(status_code=400, detail="Previous hash mismatch")
     
     ledger.save_block(incoming_block)
     return {"message": "Block accepted"}
@@ -253,6 +267,16 @@ async def validate_local_chain():
     """Local chain validation endpoint for peer nodes."""
     chain = ledger.get_chain()
     return {"valid": ledger.validate_chain(chain)}
+
+
+@app.post("/api/v1/federated/reset_chain")
+async def reset_blockchain():
+    """Reset blockchain to genesis block only. WARNING: Deletes all blocks!"""
+    try:
+        ledger.reset_chain()
+        return {"message": "Blockchain reset to genesis block", "blocks": 1}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset chain: {str(e)}")
 
 
 @app.get("/api/v1/federated/decrypt_block/{block_index}")
@@ -315,6 +339,20 @@ async def sync_chain_from_network():
         "new_length": len(longest_chain),
         "synced_from": "network_consensus"
     }
+
+
+@app.post("/api/v1/federated/reset_chain")
+async def reset_blockchain():
+    """Reset the blockchain to only genesis block. WARNING: Deletes all blocks!"""
+    try:
+        ledger.reset_chain()
+        chain = ledger.get_chain()
+        return {
+            "message": "Blockchain reset to genesis block",
+            "blocks_remaining": len(chain)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset chain: {str(e)}")
 
 
 @app.post("/api/v1/image/analyze")

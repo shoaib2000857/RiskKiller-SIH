@@ -21,7 +21,8 @@ export default function FederatedBlockchain() {
 
   const fetchChain = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/federated/chain");
+      const nodeUrl = NODE_URLS[selectedNode];
+      const res = await fetch(`${nodeUrl}/api/v1/federated/chain`);
       const data = await res.json();
       setChain(data.chain || []);
     } catch (error) {
@@ -97,7 +98,7 @@ export default function FederatedBlockchain() {
     fetchChain();
     const interval = setInterval(fetchChain, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedNode]);
 
   return (
     <div className="space-y-6">

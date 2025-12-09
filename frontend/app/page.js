@@ -11,6 +11,7 @@ import Toast from "@/components/Toast";
 import FederatedBlockchain from "@/components/FederatedBlockchain";
 import ImageAnalyzer from "@/components/ImageAnalyzer";
 import WorldHeatmapLeaflet from "@/components/WorldHeatmapLeaflet";
+import BlockchainGraph from "@/components/BlockchainGraph";
 import ThemeToggle from "@/components/ThemeToggle";
 import {
   submitIntake,
@@ -336,6 +337,10 @@ export default function HomePage() {
 
           <div className="mt-12 break-words">
             <FederatedBlockchain />
+          </div>
+
+          <div className="mt-12 break-words">
+            <BlockchainGraph />
           </div>
 
           <div className="mt-12 break-all">
