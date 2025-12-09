@@ -55,6 +55,8 @@ class SharingEngine:
         destination: str,
         payload: Dict[str, str],
         policy_tags: List[str],
+        risk_level: str = "low-risk",
+        composite_score: float = 0.0,
     ) -> SharingPackage:
         package_id = f"pkg-{uuid4()}"
         created_at = datetime.utcnow()
@@ -75,6 +77,8 @@ class SharingEngine:
             payload={k: json.dumps(v) if isinstance(v, dict) else str(v) for k, v in payload.items()},
             signature=signature,
             hop_trace=hop_trace,
+            risk_level=risk_level,
+            composite_score=composite_score,
         )
 
     def _generate_hop_trace(self, destination: str) -> List[HopTrace]:

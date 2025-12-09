@@ -25,6 +25,8 @@ export default function CaseDetail({
   shareOutput,
 }) {
   const [formState, setFormState] = useState(defaultShareForm);
+  const [showRiskWarning, setShowRiskWarning] = useState(false);
+  const [pendingShareData, setPendingShareData] = useState(null);
 
   const metadataEntries = useMemo(() => {
     if (!submission?.metadata) return [];
@@ -98,10 +100,38 @@ export default function CaseDetail({
 
   const handleShareSubmit = async (event) => {
     event.preventDefault();
-    await onShare({
+    
+    const shareData = {
       ...formState,
       intake_id: caseData.intake_id,
-    });
+    };
+    
+    // Check if this is a high-risk case
+    const classification = (caseData.classification || "").toLowerCase();
+    const isHighRisk = classification === "high-risk" || 
+                       (typeof caseData.composite_score === "number" && caseData.composite_score >= 0.7);
+    
+    if (isHighRisk) {
+      // Show warning dialog for high-risk packages
+      setPendingShareData(shareData);
+      setShowRiskWarning(true);
+    } else {
+      // Proceed normally for low/medium risk
+      await onShare(shareData);
+    }
+  };
+  
+  const handleConfirmHighRiskShare = async () => {
+    setShowRiskWarning(false);
+    if (pendingShareData) {
+      await onShare(pendingShareData);
+      setPendingShareData(null);
+    }
+  };
+  
+  const handleCancelHighRiskShare = () => {
+    setShowRiskWarning(false);
+    setPendingShareData(null);
   };
 
   return (
@@ -589,6 +619,48 @@ export default function CaseDetail({
           </>
         ) : null}
       </section>
+
+      {/* High Risk Warning Dialog */}
+      {showRiskWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 max-w-md rounded-2xl border border-rose-500/30 bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-rose-500/20">
+                <svg className="h-6 w-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-rose-200">High Risk Content Warning</h3>
+                <p className="mt-2 text-sm text-slate-300">
+                  The package you are trying to send contains <span className="font-semibold text-rose-300">high-risk content</span> (Risk Score: {Math.round((caseData.composite_score || 0) * 100)}%).
+                </p>
+                <p className="mt-2 text-sm text-slate-400">
+                  Destination: <span className="font-semibold text-white">{formState.destination}</span>
+                </p>
+                <p className="mt-1 text-sm text-slate-400">
+                  Please confirm that you want to proceed with sharing this intelligence package.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={handleCancelHighRiskShare}
+                className="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmHighRiskShare}
+                disabled={sharePending}
+                className="flex-1 rounded-lg border border-rose-500/40 bg-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/30 disabled:opacity-50"
+              >
+                {sharePending ? "Processing..." : "Confirm & Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -635,6 +707,21 @@ function ScoreDial({ value }) {
   const arcLength = circumference * 0.75;
   const safeValue = Math.max(0, Math.min(value, 1));
   const offset = arcLength - safeValue * arcLength;
+  
+  // Determine color based on score
+  const scorePercent = safeValue * 100;
+  let strokeColor, textColor;
+  
+  if (scorePercent >= 75) {
+    strokeColor = "rgb(239 68 68)"; // red-500
+    textColor = "text-red-300";
+  } else if (scorePercent >= 50) {
+    strokeColor = "rgb(249 115 22)"; // orange-500
+    textColor = "text-orange-300";
+  } else {
+    strokeColor = "rgb(52 211 153)"; // emerald-400
+    textColor = "text-emerald-200";
+  }
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -653,7 +740,7 @@ function ScoreDial({ value }) {
           cx={center}
           cy={center}
           r={radius}
-          stroke="rgb(52 211 153)" // emerald-400
+          stroke={strokeColor}
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={arcLength}
@@ -663,7 +750,7 @@ function ScoreDial({ value }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-emerald-200 text-sm font-semibold">
+        <span className={`${textColor} text-sm font-semibold`}>
           {Math.round(safeValue * 100)}%
         </span>
       </div>

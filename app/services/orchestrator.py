@@ -159,11 +159,18 @@ class AnalysisOrchestrator:
             metadata = {k: v for k, v in metadata.items() if k not in {"actor_id", "user_id"}}
         payload["metadata"] = metadata
         policy_tags = self._determine_policy(request)
+        
+        # Extract risk information
+        classification = record.get("classification", "low-risk")
+        composite_score = record.get("composite_score", 0.0)
+        
         package = self.sharing.create_package(
             intake_id=request.intake_id,
             destination=request.destination,
             payload=payload,
             policy_tags=policy_tags,
+            risk_level=classification,
+            composite_score=composite_score,
         )
         self.db.log_action(
             intake_id=request.intake_id,

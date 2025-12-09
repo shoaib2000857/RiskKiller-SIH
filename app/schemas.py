@@ -133,3 +133,7 @@ class SharingPackage(BaseModel):
     payload: Dict[str, str]
     signature: str
     hop_trace: Optional[List[HopTrace]] = None
+    risk_level: str
+    composite_score: float
+    risk_level: str
+    composite_score: float
