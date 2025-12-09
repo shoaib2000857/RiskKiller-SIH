@@ -9,21 +9,6 @@ router = APIRouter(prefix="/api/v1/heatmap", tags=["heatmap"])
 
 # City/District to coordinates mapping
 REGION_COORDS: Dict[str, tuple] = {
-	"Delhi": (28.6139, 77.2090),
-	"Hyderabad": (17.3850, 78.4867),
-	"Warangal": (18.0003, 79.5882),
-	"Karimnagar": (18.4386, 79.1288),
-	"Vijayawada": (16.5062, 80.6480),
-	"Visakhapatnam": (17.6868, 83.2185),
-	"Tirupati": (13.6288, 79.4192),
-	"Bengaluru": (12.9716, 77.5946),
-	"Chennai": (13.0827, 80.2707),
-	"Mumbai": (19.0760, 72.8777),
-	"Pune": (18.5204, 73.8567),
-	"Ahmedabad": (23.0225, 72.5714),
-	"Jaipur": (26.9124, 75.7873),
-	"Lucknow": (26.8467, 80.9462),
-	"Kolkata": (22.5726, 88.3639),
 }
 
 DATA_DIR = os.path.join(os.getcwd(), "data")
