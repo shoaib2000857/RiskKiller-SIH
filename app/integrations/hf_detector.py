@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class AIDetector:
     """
     Dual-model detector for AI-generated content:
-    1. AI vs Human detection using DeBERTa v3 LoRA (XOmar/ai_vs_human_detector_deberta_v3_lora)
+    1. AI vs Human detection using DeBERTa v3 LoRA (ShoaibSSM/ai_vs_human_detector_deberta_v3_lora)
     2. Model Family detection for AI-generated text (XOmar/model_family_detector_deberta_v3_balanced)
     """
 
@@ -31,6 +31,12 @@ class AIDetector:
         self._ai_human_tokenizer = None
         self._family_model = None
         self._family_tokenizer = None
+
+        # Allow overriding the adapter checkpoint via env for flexibility
+        self._ai_human_adapter_id = os.getenv(
+            "HF_AI_HUMAN_MODEL",
+            "ShoaibSSM/ai_vs_human_detector_deberta_v3_lora/checkpoint-68090",
+        )
         
         # Skip model loading if disabled (e.g., in Docker blockchain nodes)
         if os.getenv("DISABLE_AI_MODELS", "false").lower() == "true":
@@ -48,11 +54,13 @@ class AIDetector:
         """Load both AI detection models with error handling and fallbacks."""
         try:
             # --- 1. Load AI vs Human Detector (LoRA) ---
-            logger.info("⏳ Loading AI vs Human detector (LoRA)...")
-            ai_human_adapter_id = "XOmar/ai_vs_human_detector_deberta_v3_lora"
+            logger.info(
+                "⏳ Loading AI vs Human detector (LoRA): %s",
+                self._ai_human_adapter_id,
+            )
             
             # Load the Peft Config to find the base model
-            config = PeftConfig.from_pretrained(ai_human_adapter_id)
+            config = PeftConfig.from_pretrained(self._ai_human_adapter_id)
             
             # Load Base Model
             base_model = AutoModelForSequenceClassification.from_pretrained(
@@ -61,13 +69,13 @@ class AIDetector:
             )
             
             # Load LoRA Adapter
-            self._ai_human_model = PeftModel.from_pretrained(base_model, ai_human_adapter_id)
+            self._ai_human_model = PeftModel.from_pretrained(base_model, self._ai_human_adapter_id)
             self._ai_human_model.to(self._device)
             self._ai_human_model.eval()
             
             # Smart Tokenizer Loading (Fallback to base if adapter has no tokenizer)
             try:
-                self._ai_human_tokenizer = AutoTokenizer.from_pretrained(ai_human_adapter_id)
+                self._ai_human_tokenizer = AutoTokenizer.from_pretrained(self._ai_human_adapter_id)
             except Exception:
                 logger.warning("Tokenizer not found in adapter, loading from base model...")
                 self._ai_human_tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
