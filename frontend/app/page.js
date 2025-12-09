@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import MetricCard from "@/components/MetricCard";
 import IntakeForm from "@/components/IntakeForm";
@@ -231,8 +232,28 @@ export default function HomePage() {
         <header className="relative z-10 border-b border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950 break-normal">
           <div className="mx-auto max-w-7xl px-6 py-12 break-normal">
             <div className="flex flex-col gap-10 break-normal">
-              <div>
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <ThemeToggle />
+                <Link
+                  href="/simple"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-slate-200 transition hover:border-emerald-400 hover:text-emerald-200"
+                >
+                  Guided dashboard
+                  <svg
+                    className="h-3.5 w-3.5 text-emerald-300"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M4.167 10h11.666M10 4.167 15.833 10 10 15.833"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </Link>
               </div>
 
               <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between break-normal">

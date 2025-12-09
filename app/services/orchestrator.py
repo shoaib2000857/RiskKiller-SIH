@@ -56,6 +56,9 @@ class AnalysisOrchestrator:
         provenance = self.watermark.verify(intake.text)
         graph_summary = self.graph.ingest(intake_id, intake, classification, composite_score)
 
+        summary_text = self._generate_summary(intake, classification, composite_score, breakdown)
+        decision_reason = self._build_decision_reason(classification, composite_score, breakdown)
+
         self.db.save_case(
             intake_id=intake_id,
             raw_text=intake.text,
@@ -64,6 +67,8 @@ class AnalysisOrchestrator:
             metadata=intake.dict().get("metadata", {}) or {},
             breakdown=breakdown.dict(),
             provenance=provenance.dict(),
+            summary=summary_text,
+            decision_reason=decision_reason,
         )
         self.db.log_action(
             intake_id=intake_id,
@@ -87,6 +92,9 @@ class AnalysisOrchestrator:
             breakdown=breakdown,
             provenance=provenance,
             graph_summary=graph_summary,
+            summary=summary_text,
+            findings=breakdown.heuristics[:5] if breakdown.heuristics else None,
+            decision_reason=decision_reason,
         )
 
         self._emit_event(
@@ -194,6 +202,59 @@ class AnalysisOrchestrator:
                 print(f"Failed to publish to blockchain: {e}")
         
         return package
+
+    def _generate_summary(
+        self,
+        intake: ContentIntake,
+        classification: str,
+        composite_score: float,
+        breakdown,
+    ) -> str:
+        metadata = intake.metadata.dict() if intake.metadata else {}
+        platform = metadata.get("platform") or intake.source or "an unspecified platform"
+        region = metadata.get("region") or "an unspecified region"
+        score_pct = f"{max(0, min(100, round(composite_score * 100)))}%"
+        heuristics = (breakdown.heuristics or [])[:2]
+        if heuristics:
+            heuristics_text = "; ".join(heuristics)
+            heuristics_sentence = f"Key signals: {heuristics_text}."
+        else:
+            heuristics_sentence = "No heuristics were triggered during analysis."
+        ai_prob = breakdown.ai_probability
+        ai_clause = ""
+        if isinstance(ai_prob, (int, float)):
+            ai_clause = f" AI detector confidence registered at {max(0, min(100, round(ai_prob * 100)))}%."
+        return (
+            f"{classification.title()} classification for a narrative originating from {region} "
+            f"on {platform}. Composite risk scored {score_pct}.{ai_clause} {heuristics_sentence}"
+        )
+
+    def _build_decision_reason(
+        self,
+        classification: str,
+        composite_score: float,
+        breakdown,
+    ) -> str:
+        heuristics = breakdown.heuristics or []
+        reason_parts: list[str] = []
+        if heuristics:
+            primary = "; ".join(heuristics[:3])
+            reason_parts.append(f"Triggered heuristics: {primary}.")
+        ai_prob = breakdown.ai_probability
+        if isinstance(ai_prob, (int, float)):
+            reason_parts.append(
+                f"AI detector flagged a {max(0, min(100, round(ai_prob * 100)))}% likelihood."
+            )
+        behavior = breakdown.behavioral_score
+        if isinstance(behavior, (int, float)) and behavior > 0.5:
+            reason_parts.append(
+                "Behavioral cues indicated urgent or coordinated language patterns."
+            )
+        if not reason_parts:
+            reason_parts.append(
+                f"Composite risk score of {max(0, min(100, round(composite_score * 100)))}% exceeded the {classification.lower()} threshold."
+            )
+        return " ".join(reason_parts)
 
     def _emit_event(self, event: Dict[str, Any]) -> None:
         try:

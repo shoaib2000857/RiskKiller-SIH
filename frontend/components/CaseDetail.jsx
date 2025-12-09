@@ -159,6 +159,15 @@ export default function CaseDetail({
         </div>
       </section>
 
+      {caseData.decision_reason && (
+        <section className="rounded-2xl border border-emerald-500/10 bg-emerald-500/5 px-5 py-4">
+          <p className="text-xs uppercase tracking-[0.32em] text-emerald-300">Decision rationale</p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-100">
+            {caseData.decision_reason}
+          </p>
+        </section>
+      )}
+
       <section className="space-y-5">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
           Signal breakdown

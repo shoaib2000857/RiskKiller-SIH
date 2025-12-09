@@ -87,6 +87,9 @@ class DetectionResult(BaseModel):
     breakdown: DetectionBreakdown
     provenance: ProvenancePayload
     graph_summary: GraphSummary
+    summary: Optional[str] = None
+    findings: Optional[List[str]] = None
+    decision_reason: Optional[str] = None
 
 
 class ThreatIntelFeed(BaseModel):

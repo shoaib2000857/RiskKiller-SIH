@@ -44,7 +44,12 @@ const CITIES = [
   "Zirakpur", "Zagreb", "Zaragoza", "Zhengzhou", "Zibo", "Zurich"
 ];
 
-export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }) {
+export default function IntakeForm({
+  onSubmit,
+  isSubmitting,
+  onValidationError,
+  variant = "dark",
+}) {
   const [text, setText] = useState("");
   const [language, setLanguage] = useState("en");
   const [source, setSource] = useState("");
@@ -59,6 +64,33 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
   const [speechError, setSpeechError] = useState("");
+
+  const isLight = variant === "light";
+  const inputClass = isLight
+    ? "w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+    : "input";
+  const textareaClass = isLight
+    ? "mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+    : "mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50";
+  const containerClass = isLight
+    ? "mt-6 space-y-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70"
+    : "mt-6 space-y-6 rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/30";
+  const titleClass = isLight
+    ? "text-2xl font-semibold text-slate-900"
+    : "text-2xl font-semibold text-white";
+  const subtitleClass = isLight
+    ? "text-sm text-slate-600"
+    : "text-sm text-slate-400";
+  const labelClass = isLight
+    ? "text-sm font-semibold text-slate-700"
+    : "text-sm font-semibold text-slate-200";
+  const voiceButtonActiveClass = isLight
+    ? "border-rose-200 bg-rose-50 text-rose-700"
+    : "border-rose-300/70 bg-rose-500/10 text-rose-200";
+  const voiceButtonIdleClass = isLight
+    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+    : "border-emerald-400/40 bg-emerald-500/10 text-emerald-200";
+  const statusTextClass = isLight ? "text-xs text-slate-500" : "text-xs text-slate-400";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -214,25 +246,19 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mt-6 space-y-6 rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/30"
-    >
+    <form onSubmit={handleSubmit} className={containerClass}>
       <header className="flex flex-col gap-2">
-        <h2 className="text-2xl font-semibold text-white">
+        <h2 className={titleClass}>
           Submit narrative for detection
         </h2>
-        <p className="text-sm text-slate-400">
+        <p className={subtitleClass}>
           Paste flagged content, enrich with context, and trigger the end-to-end
           pipeline.
         </p>
       </header>
       <div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <label
-            htmlFor="payload-text"
-            className="text-sm font-semibold text-slate-200"
-          >
+          <label htmlFor="payload-text" className={labelClass}>
             Narrative payload
           </label>
           <button
@@ -240,9 +266,7 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
             onClick={handleToggleDictation}
             disabled={!speechSupported || isSubmitting}
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide transition focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-40 ${
-              isListening
-                ? "border-rose-300/70 bg-rose-500/10 text-rose-200"
-                : "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+              isListening ? voiceButtonActiveClass : voiceButtonIdleClass
             }`}
           >
             <span
@@ -261,7 +285,7 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
           placeholder="Paste suspect content or hostile call-to-action..."
           value={text}
           onChange={(event) => setText(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          className={textareaClass}
         />
         <p className="mt-2 text-xs text-slate-500">
           Minimum {minCharacters} characters. The orchestrator runs heuristics,
@@ -278,45 +302,45 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 text-sm">
-        <InputField label="Language">
+        <InputField label="Language" variant={variant}>
           <input
             id="payload-language"
             value={language}
             onChange={(event) => setLanguage(event.target.value)}
-            className="input"
+            className={inputClass}
           />
         </InputField>
-        <InputField label="Source channel">
+        <InputField label="Source channel" variant={variant}>
           <input
             id="payload-source"
             value={source}
             placeholder="e.g. darknet, social-feed"
             onChange={(event) => setSource(event.target.value)}
-            className="input"
+            className={inputClass}
           />
         </InputField>
-        <InputField label="Analyst tags">
+        <InputField label="Analyst tags" variant={variant}>
           <input
             id="payload-tags"
             value={tags}
             placeholder="disinfo, amplification"
             onChange={(event) => setTags(event.target.value)}
-            className="input"
+            className={inputClass}
           />
         </InputField>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 text-sm">
-        <InputField label="Platform">
+        <InputField label="Platform" variant={variant}>
           <input
             id="payload-platform"
             value={platform}
             placeholder="telegram, state-media"
             onChange={(event) => setPlatform(event.target.value)}
-            className="input"
+            className={inputClass}
           />
         </InputField>
-        <InputField label="Region (city/district)">
+        <InputField label="Region (city/district)" variant={variant}>
           <div ref={regionInputRef} className="relative">
             <input
               id="payload-region"
@@ -329,7 +353,7 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
                   setShowRegionSuggestions(true);
                 }
               }}
-              className="input w-full"
+              className={inputClass}
               autoComplete="off"
             />
             {showRegionSuggestions && filteredCities.length > 0 && (
@@ -348,19 +372,19 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
             )}
           </div>
         </InputField>
-        <InputField label="Actor ID">
+        <InputField label="Actor ID" variant={variant}>
           <input
             id="payload-actor"
             value={actorId}
             placeholder="Suspected cell"
             onChange={(event) => setActorId(event.target.value)}
-            className="input"
+            className={inputClass}
           />
         </InputField>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className={`flex items-center gap-2 ${statusTextClass}`}>
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
           Pipeline orchestration online
         </div>
@@ -390,10 +414,19 @@ export default function IntakeForm({ onSubmit, isSubmitting, onValidationError }
   );
 }
 
-function InputField({ label, children }) {
+function InputField({ label, children, variant = "dark" }) {
+  const isLight = variant === "light";
   return (
-    <label className="flex flex-col gap-2 text-slate-200">
-      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+    <label
+      className={`flex flex-col gap-2 ${
+        isLight ? "text-slate-700" : "text-slate-200"
+      }`}
+    >
+      <span
+        className={`text-xs uppercase tracking-[0.3em] ${
+          isLight ? "text-slate-500" : "text-slate-400"
+        }`}
+      >
         {label}
       </span>
       {children}

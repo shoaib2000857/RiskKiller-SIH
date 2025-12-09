@@ -117,6 +117,9 @@ async def get_case(request: Request, intake_id: str):
             "breakdown": record["breakdown"],
             "provenance": record["provenance"],
             "graph_summary": graph_snapshot.dict(),
+            "summary": record.get("summary"),
+            "findings": (record.get("breakdown", {}).get("heuristics") or [])[:5],
+            "decision_reason": record.get("decision_reason"),
         }
     )
 

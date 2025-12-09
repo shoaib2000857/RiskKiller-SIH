@@ -28,10 +28,18 @@ class Database:
                     metadata_json TEXT,
                     breakdown_json TEXT,
                     provenance_json TEXT,
+                    summary_text TEXT,
+                    decision_reason TEXT,
                     created_at TEXT NOT NULL
                 )
             """
             )
+            cur.execute("PRAGMA table_info(cases)")
+            columns = {row[1] for row in cur.fetchall()}
+            if "summary_text" not in columns:
+                cur.execute("ALTER TABLE cases ADD COLUMN summary_text TEXT")
+            if "decision_reason" not in columns:
+                cur.execute("ALTER TABLE cases ADD COLUMN decision_reason TEXT")
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audit_log (
@@ -75,6 +83,8 @@ class Database:
         metadata: Dict[str, Any],
         breakdown: Dict[str, Any],
         provenance: Dict[str, Any],
+        summary: Optional[str] = None,
+        decision_reason: Optional[str] = None,
     ) -> None:
         with self._cursor() as cur:
             cur.execute(
@@ -87,8 +97,10 @@ class Database:
                     metadata_json,
                     breakdown_json,
                     provenance_json,
+                    summary_text,
+                    decision_reason,
                     created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     intake_id,
@@ -98,6 +110,8 @@ class Database:
                     json.dumps(metadata),
                     json.dumps(breakdown),
                     json.dumps(provenance),
+                    summary,
+                    decision_reason,
                     datetime.utcnow().isoformat(),
                 ),
             )
@@ -142,7 +156,19 @@ class Database:
     def fetch_case(self, intake_id: str) -> Optional[Dict[str, Any]]:
         with self._cursor() as cur:
             cur.execute(
-                "SELECT raw_text, classification, composite_score, metadata_json, breakdown_json, provenance_json, created_at FROM cases WHERE intake_id=?",
+                """
+                SELECT
+                    raw_text,
+                    classification,
+                    composite_score,
+                    metadata_json,
+                    breakdown_json,
+                    provenance_json,
+                    summary_text,
+                    decision_reason,
+                    created_at
+                FROM cases WHERE intake_id=?
+            """,
                 (intake_id,),
             )
             row = cur.fetchone()
@@ -158,7 +184,9 @@ class Database:
                 "metadata": metadata_json,
                 "breakdown": breakdown,
                 "provenance": provenance,
-                "created_at": row[6],
+                "summary": row[6],
+                "decision_reason": row[7],
+                "created_at": row[8],
             }
 
     def log_action(self, intake_id: str, action: str, actor: str, payload: Dict[str, Any]):
