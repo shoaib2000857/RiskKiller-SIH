@@ -228,20 +228,20 @@ export default function HomePage() {
           style={{ pointerEvents: "none" }}
         />
 
-        <header className="relative z-10 border-b border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950 break-words">
-          <div className="mx-auto max-w-7xl px-6 py-12">
-            <div className="flex flex-col gap-10 break-words">
+        <header className="relative z-10 border-b border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950 break-normal">
+          <div className="mx-auto max-w-7xl px-6 py-12 break-normal">
+            <div className="flex flex-col gap-10 break-normal">
               <div>
                 <ThemeToggle />
               </div>
 
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between break-words">
-                <div className="max-w-3xl space-y-4 break-words">
-                  <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-emerald-300 break-words">
+              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between break-normal">
+                <div className="max-w-3xl space-y-4 break-normal">
+                  <p className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-emerald-300 break-normal">
                     TattvaDrishti Shield
                   </p>
 
-                  <h1 className="text-4xl font-semibold leading-tight text-white md:text-5xl break-words">
+                  <h1 className="text-4xl font-semibold leading-tight text-white md:text-5xl break-normal whitespace-normal">
                     Proactive tradecraft dashboard for{" "}
                     <span className="text-emerald-300 hero-highlight">
                       malign influence
@@ -249,30 +249,30 @@ export default function HomePage() {
                     detection.
                   </h1>
 
-                  <p className="text-base text-slate-300 md:text-lg whitespace-pre-wrap break-words">
+                  <p className="text-base text-slate-300 md:text-lg whitespace-normal break-normal">
                     Stream intakes, score narratives, and assemble shareable intelligence packages directly from the FastAPI orchestrator. This standalone Next.js experience highlights the full surface area of your backend.
                   </p>
                 </div>
 
-                <div className="space-y-4 text-right text-sm text-slate-300 break-words">
+                <div className="space-y-4 text-right text-sm text-slate-300 break-normal">
                   <p className="text-xs uppercase tracking-[0.32em] text-emerald-300">
                     API Base
                   </p>
-                  <p className="mt-1 font-mono text-xs text-slate-400/80 break-words">
+                  <p className="mt-1 font-mono text-xs text-slate-400/80 break-normal whitespace-normal">
                     {API_BASE_URL.replace("http://", "").replace("https://", "")}
                   </p>
 
                   <p className="text-xs uppercase tracking-[0.32em] text-slate-400">
                     Endpoints
                   </p>
-                  <p className="mt-1 font-mono text-xs text-slate-400/80 break-words">
+                  <p className="mt-1 font-mono text-xs text-slate-400/80 break-normal whitespace-normal">
                     /api/v1/intake · /api/v1/cases/:id · /api/v1/share · /api/v1/integrations/threat-intel · /api/v1/integrations/siem
                   </p>
                 </div>
               </div>
 
               {/* Metrics */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 break-words">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 break-normal">
                 <MetricCard label="Analyses Run" value={metrics.total} />
                 <MetricCard label="High Risk Flags" value={metrics.highRisk} accent="text-rose-200" />
                 <MetricCard label="Average Score" value={`${metrics.average}%`} accent="text-amber-200" />
