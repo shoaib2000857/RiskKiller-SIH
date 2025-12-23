@@ -1,15 +1,29 @@
 # Tests Overview (tests/)
 
-Purpose
-- Validate the core detection pipeline and sharing safeguards.
+## Purpose
+Validate critical logic in the detection and sharing pipeline while keeping test runtime lightweight.
 
-Coverage
-- test_detection.py: verifies heuristic scoring paths and classification bounds.
-- test_sharing.py: ensures PII masking in sharing payloads.
+## Current Coverage
+- test_detection.py
+  - Ensures heuristic scoring returns a valid composite score.
+  - Confirms classification stays within expected buckets.
 
-Quality signals
-- Disables heavyweight AI models for deterministic unit tests.
-- Exercises orchestration logic without external services.
+- test_sharing.py
+  - Ensures sharing payload redacts personal identifiers.
 
-Libraries used
+## Test Strategy
+- Disable AI model loading to keep tests deterministic.
+- Use temporary SQLite databases via monkeypatch.
+
+## How to Run
+```bash
+pytest
+```
+
+## Future Additions
+- Federated ledger validation and sync tests.
+- Heatmap persistence tests.
+- Image analysis endpoint smoke tests (with mocks).
+
+## Dependencies
 - pytest

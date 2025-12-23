@@ -1,13 +1,18 @@
 # Styles Overview (frontend/styles/)
 
-Purpose
-- Reserve space for styling assets that complement Tailwind utility classes.
+## Purpose
+Define styling strategy for the dashboards and supporting UI.
 
-Current styling approach
+## Current Strategy
 - Tailwind CSS is the primary styling system.
-- globals.css in app/ defines base layers and global tokens.
-- Tailwind configuration is in frontend/tailwind.config.js.
+- globals.css (frontend/app) houses base styles and custom classes.
+- tailwind.config.js defines theme extensions and content scanning.
 
-Design intent
-- Fast iteration with consistent visual language across dashboards.
-- Component-first styling with minimal bespoke CSS.
+## Design Principles
+- Utility-first styling for speed and consistency.
+- Layered backgrounds and gradients to convey urgency and depth.
+- Consistent typography and spacing tokens across pages.
+
+## Extension Ideas
+- Introduce a design token map for risk levels and alert states.
+- Add a dedicated typography scale for analyst dashboards.

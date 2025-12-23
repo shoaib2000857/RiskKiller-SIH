@@ -1,17 +1,26 @@
 # Frontend Lib Overview (frontend/lib/)
 
-Purpose
-- Centralize API access patterns and environmental configuration.
+## Purpose
+Centralize API access and environment configuration for the frontend.
 
-What it does
-- Defines API base URLs and node endpoints from env.
-- Wraps intake submission, case retrieval, and sharing requests.
-- Creates SSE event streams for live updates.
+## API Helpers
+- submitIntake(payload): POST /api/v1/intake
+- fetchCase(intakeId): GET /api/v1/cases/{id}
+- requestSharingPackage(payload): POST /api/v1/share
+- createEventStream(onEvent, onError): SSE stream helper
 
-Engineering intent
-- Single source of truth for service endpoints.
-- Thin wrappers to keep components clean and declarative.
+## Environment Variables
+- NEXT_PUBLIC_API_BASE_URL
+- NEXT_PUBLIC_NODE1_URL
+- NEXT_PUBLIC_NODE2_URL
+- NEXT_PUBLIC_NODE3_URL
+- NEXT_PUBLIC_NODE4_URL
 
-Libraries used
-- browser fetch API
-- EventSource for SSE
+## Design Intent
+- Keep components clean by isolating HTTP mechanics.
+- Provide a single source of truth for API endpoints.
+- Standardize error handling and payload parsing.
+
+## Dependencies
+- fetch API
+- EventSource

@@ -1,25 +1,35 @@
 # Components Catalog (frontend/components/)
 
-Purpose
-- Reusable UI modules for analysis, visualization, and system controls.
+## Purpose
+Reusable UI building blocks for analysis, visualization, and control surfaces.
 
-Major components
-- IntakeForm: structured narrative intake with speech capture and region hints.
-- CaseTable + CaseDetail: triage list and forensic deep-dive panel.
-- EventsFeed + Toast: real-time activity stream and status messaging.
-- MetricCard + Speedometer + RadarChart: risk metrics and stylometric visualization.
-- HopTraceMap: animated route trace for sharing packages.
-- FederatedBlockchain + BlockchainGraph: ledger inspection and topology view.
-- WorldHeatmapLeaflet + WorldHeatmapCanvas: geographic risk visualization.
-- ImageAnalyzer: AI/gore/offensive checks with multi-signal toggles.
-- ThemeToggle: UX mode switching for contrast and focus.
+## Core Components
+- IntakeForm: structured intake form with metadata, tags, and optional speech input.
+- CaseTable: sortable list of recent analyses.
+- CaseDetail: case drill-down with summary, graphs, and share workflow.
+- EventsFeed: live activity stream powered by SSE events.
+- MetricCard: quick stats at a glance.
+- Speedometer: composite risk dial visualization.
+- RadarChart: stylometric profile visualization.
+- HopTraceMap: multi-hop sharing route visualization.
+- FederatedBlockchain: ledger state, validation, and sync controls.
+- BlockchainGraph: network topology visualization.
+- WorldHeatmapLeaflet / WorldHeatmapCanvas: geographic risk visualization.
+- ImageAnalyzer: AI-generated image and content moderation analysis.
+- ThemeToggle: theme switcher.
+- Toast: transient UI alerts.
 
-Skill signals in the UI layer
-- Maps and charts integrated with live data.
-- Complex forms with client-side validation and speech support.
-- Real-time feedback loops using SSE updates.
+## Data Dependencies
+- Most components consume the API wrappers in frontend/lib/api.js.
+- Federated components rely on node URLs and ledger endpoints.
+- Map components rely on Leaflet and its heatmap plugin.
 
-Libraries used
+## Engineering Focus
+- Real-time visualization with auto-refresh.
+- Structured information hierarchy for analyst workflows.
+- Modular components to keep pages readable and maintainable.
+
+## Dependencies
 - react, next
 - leaflet, leaflet.heat
-- tailwindcss utilities
+- tailwindcss
