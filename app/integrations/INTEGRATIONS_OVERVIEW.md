@@ -1,20 +1,48 @@
 # Integrations Module Overview (app/integrations/)
 
-Purpose
-- Encapsulate model and API clients used by the detection pipeline.
-- Provide graceful fallbacks when optional AI services are unavailable.
+## Purpose
+Wrap external AI services with resilient, testable interfaces so the core pipeline can run even when optional services are offline.
 
-Key components
-- hf_detector.py: dual-model Hugging Face pipeline (AI vs human + model family).
-- ollama_client.py: local LLM client for semantic risk scoring and JSON parsing.
+## Hugging Face Detector (hf_detector.py)
+- Dual model workflow:
+  - AI vs Human detector (LoRA on DeBERTa v3)
+  - Model family classifier for attribution
+- Automatic device selection (CUDA if available).
+- Adapter-aware model loading with checkpoint fallbacks.
+- Graceful degradation when model loading fails.
 
-Features that show engineering depth
-- LoRA adapter loading with checkpoint-aware fallbacks.
-- Model-family classification for forensic attribution.
-- Robust JSON extraction and numeric fallback parsing from LLM output.
-- Defensive initialization so the API keeps working without Ollama.
+Inputs
+- Raw text from intake.
 
-Libraries used
+Outputs
+- ai_probability, human_probability, verdict
+- Optional model_family + family probabilities
+
+Environment and runtime controls
+- DISABLE_AI_MODELS=true to skip model loading.
+- HF_AI_HUMAN_MODEL to override the adapter checkpoint.
+
+## Ollama Client (ollama_client.py)
+- Local LLM semantic risk scoring.
+- JSON-first response parsing with fallback regex extraction.
+- Truncation logic to keep prompts bounded.
+- Safe initialization: if Ollama is not running, the pipeline continues.
+
+Inputs
+- Raw text from intake.
+
+Outputs
+- risk score (0.0 - 1.0) or None
+
+Environment and runtime controls
+- OLLAMA_ENABLED, OLLAMA_MODEL, OLLAMA_HOST
+- OLLAMA_PROMPT_CHARS, OLLAMA_TIMEOUT
+
+## Reliability and Fallbacks
+- All integrations are optional; the pipeline continues if models are missing.
+- Errors are logged, not raised, to keep ingestion stable.
+
+## Dependencies
 - transformers, torch, peft
-- ollama (local LLM runtime)
+- ollama
 - logging, json
