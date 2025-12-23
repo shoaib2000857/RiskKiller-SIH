@@ -179,6 +179,15 @@ Features
 - JSON-first extraction with numeric fallback.
 - Defensive initialization (no crash if Ollama missing).
 
+Expected model response
+- JSON only: `{\"risk\": 0.0, \"justification\": \"brief\"}`.
+- Parser also accepts numeric fallbacks like `risk: 0.7`.
+
+Runtime behavior
+- Uses low temperature for consistent scoring.
+- Limits generation length for faster responses.
+- Returns `None` if server is unavailable or output is malformed.
+
 ---
 
 ### 4.7 app/models/graph_intel.py
