@@ -1,15 +1,27 @@
 # Scripts Overview (scripts/)
 
-Purpose
-- Developer automation for routine workflows and local setup.
+## Purpose
+Automate repetitive developer tasks and reduce setup friction.
 
-Scripts
-- auto-commit.sh: stage, commit, and optionally push with resilience to remote changes.
-- setup_ollama.sh: setup helper for local Ollama runtime (model pull and service start).
+## auto-commit.sh
+- Stages all changes, commits with a timestamp, and optionally pushes.
+- Detects branch automatically or allows explicit overrides.
+- Handles push failures by attempting a rebase retry.
 
-Design intent
-- Encourage consistent team workflows and quick environment bootstrapping.
+Usage
+```bash
+scripts/auto-commit.sh -m "Auto update"
+```
 
-Libraries used
+## setup_ollama.sh
+- Helper to install or bootstrap the Ollama runtime.
+- Pulls the required model and starts the service.
+
+Usage
+```bash
+scripts/setup_ollama.sh
+```
+
+## Dependencies
 - bash
 - git CLI

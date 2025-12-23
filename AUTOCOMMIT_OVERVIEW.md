@@ -1,17 +1,24 @@
 # Auto-Commit Tool Overview (autocommit.py)
 
-Purpose
-- Automatically stage, commit, and push changes after a period of inactivity.
+## Purpose
+Automatically commit and push changes after a short idle window to preserve rapid iteration history.
 
-What it does
-- Watches the repository for filesystem changes.
-- Waits for an idle window, then commits with a timestamped message.
-- Pushes to the configured remote/branch with failure handling.
+## How It Works
+- Watches the repo for file changes (ignores .git).
+- When no activity is detected for IDLE_SECONDS, stages all changes.
+- Commits with a timestamped message and pushes to origin.
+- Handles push failure with a warning and keeps the local commit.
 
-Why it matters
-- Provides a safety net during rapid prototyping.
-- Keeps a granular history without manual git steps.
+## Configuration
+- IDLE_SECONDS: idle time before committing.
+- BRANCH: target branch for push.
+- COMMIT_PREFIX: commit message prefix.
 
-Libraries used
+## Usage
+```bash
+python autocommit.py
+```
+
+## Dependencies
 - GitPython
 - watchdog
