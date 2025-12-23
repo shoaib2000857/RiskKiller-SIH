@@ -110,31 +110,22 @@ Core models
 ---
 
 ### 4.4 app/models/detection.py
-Stylometric + heuristic detection engine.
+Stylometric + heuristic detection engine that blends linguistic statistics, behavioral cues, and AI inference into a composite risk score.
 
-Key features
-- MATTR lexical diversity
-- Sentence length variance
-- Token burstiness
-- Character entropy
-- Repetition rate
-- Punctuation variety
-- Vocabulary richness proxy
+Feature extraction (linguistic)
+- MATTR lexical diversity (windowed type-token ratio).\n- Sentence length variance for cadence irregularities.\n- Token burstiness and repetition rate for templated phrasing.\n- Character entropy for predictability signals.\n- Punctuation variety and uppercase ratio.\n- Vocabulary richness proxy (HHI-style concentration).
 
 Behavioral heuristics
-- Urgency and CTA detection
-- Emotional manipulation indicators
-- Platform risk boosts
+- Urgency and CTA detection (regex-based patterns).\n- Emotional manipulation indicators via valence words.\n- High-risk platform boosts (e.g., anonymized/telegram).\n- Tag-based risk boosts (e.g., extremism, disinfo-campaign).
 
 AI fusion
-- Hugging Face AI detector
-- Optional model-family attribution
-- Optional Ollama semantic risk score
+- Hugging Face AI detector + optional model-family attribution.\n- Optional Ollama semantic risk scoring for qualitative context.\n- Weighted blending with sigmoid-normalized stylometric score.
+
+Classification logic
+- Composite score mapped to `low-risk`, `medium-risk`, `high-risk` buckets.\n- Decision rationale generated from dominant heuristics and AI confidence.
 
 Outputs
-- Composite score
-- Classification bucket
-- Heuristic explanations
+- Composite score (0-1).\n- Classification bucket.\n- DetectionBreakdown with anomalies, heuristics, and optional AI signals.
 
 ---
 
@@ -163,77 +154,62 @@ Features
 ---
 
 ### 4.7 app/models/graph_intel.py
-Graph intelligence engine.
+Graph intelligence engine that builds an interaction graph for actors, content, narratives, and regions to surface coordination and propagation risk.
 
-Features
-- Maintains graph of content, actors, narratives, and regions.
-- Torch-backed GNN-like projection when available.
-- Outputs communities, clusters, alerts, and propagation chains.
+Core features
+- Adds nodes for content, actors, narratives, and regions.\n- Tracks per-actor score history and averages.\n- Builds edges for publication, targeting, and origin relations.\n- Uses optional torch tensors for a GNN-like score projection.\n- Summarizes:\n  - High-risk actors\n  - Communities\n  - GNN clusters\n  - Coordination alerts\n  - Propagation chains
+
+Outputs
+- `GraphSummary` for UI.\n- `ThreatIntelFeed` and `SIEMCorrelationPayload` for integrations.
 
 ---
 
 ### 4.8 app/models/watermark.py
-Provenance checks.
+Provenance checks for watermark and signature validation.
 
 Features
-- Detects embedded watermarks.
-- Generates probabilistic fingerprints if missing.
-- Validates timestamped signatures.
+- Regex-based watermark and signature detection.\n- Probabilistic watermark fingerprint when missing.\n- Time-based signature validation using a rotating daily hash.\n- Returns validation notes to preserve analyst context.
 
 ---
 
 ### 4.9 app/models/sharing.py
-Sharing package engine.
+Sharing package engine that builds secure, auditable bundles for federated exchange.
 
 Features
-- Signed JSON envelope
-- Policy tags for privacy/export control
-- Multi-hop route simulation with latency
+- Signed JSON envelope using `APP_SECRET`.\n- Policy tags: privacy redaction + export-control markers.\n- Multi-hop route simulation with latency and provider metadata.\n- Stable package IDs and timestamped creation metadata.
 
 ---
 
 ### 4.10 app/services/orchestrator.py
-Pipeline orchestrator.
+Pipeline orchestrator that connects detection, provenance, graph intel, storage, and federation.
 
 Stages
-1. ID creation and timestamps.
-2. Detection + provenance.
-3. Graph ingestion.
-4. Storage and audit logs.
-5. SSE event emission.
+1. Generate intake id and timestamp.\n2. Run detection and behavioral heuristics.\n3. Run provenance and watermark checks.\n4. Ingest into graph intelligence.\n5. Persist case, audit, and fingerprint records.\n6. Emit SSE event for dashboards.
 
-Sharing
-- Builds packages and optionally publishes to federated nodes.
+Sharing workflow
+- Fetches case data locally or from a main node.\n- Applies policy tags and redaction rules.\n- Builds hop trace and signs package.\n- Optionally publishes a ledger block to destination node.
 
 ---
 
 ### 4.11 app/storage/database.py
-SQLite persistence.
+SQLite persistence layer for cases, audit logs, and fingerprints.
 
 Tables
-- `cases`
-- `audit_log`
-- `fingerprints`
+- `cases`: full analysis output (classification, composite, breakdown, provenance).\n- `audit_log`: append-only action log.\n- `fingerprints`: normalized hashes for re-identification.
 
-Notes
-- Auto-init and minimal schema evolution.
-- Normalized hashing for fuzzy match.
+Behavior
+- Auto-initialize tables and add missing columns.\n- Inserts or replaces cases by intake id.\n- Normalized hashing for fuzzy matching.
 
 ---
 
 ### 4.12 app/federated/*
-Federated ledger subsystem.
+Federated ledger subsystem for tamper-evident intelligence sharing.
 
 Components
-- `ledger.py`: block structure
-- `manager.py`: persistence + validation
-- `node.py`: peer broadcast
-- `crypto.py`: Fernet encryption + Ed25519 signature
+- `ledger.py`: block structure with canonical payload serialization.\n- `manager.py`: chain storage, validation, and reset.\n- `node.py`: peer discovery and block broadcast.\n- `crypto.py`: Fernet encryption + Ed25519 signing and verification.
 
-Features
-- Tamper detection
-- Peer validation
-- Chain sync for recovery
+Key behaviors
+- Genesis block creation on first run.\n- Validation checks: previous hash, hash integrity, signature verification.\n- Peer broadcast for replication.\n- Chain sync from the longest valid peer chain.
 
 ---
 
