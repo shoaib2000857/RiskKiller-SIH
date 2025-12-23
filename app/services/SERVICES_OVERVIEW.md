@@ -1,23 +1,33 @@
 # Services Module Overview (app/services/)
 
-Purpose
-- Orchestrate the end-to-end detection pipeline and handle cross-module coordination.
+## Purpose
+Coordinate the end-to-end analysis workflow and connect all core engines.
 
-Key component
-- orchestrator.py: synchronous analysis workflow wrapped for async FastAPI usage.
+## Orchestrator (orchestrator.py)
 
-What it does
-- Generates intake IDs and timestamps.
-- Runs detection, watermark verification, and graph ingestion.
-- Stores cases, audit events, and fingerprints.
-- Builds sharing packages and optionally publishes to federated ledger.
-- Streams live events for SSE dashboards.
+### Pipeline stages
+1. Generate intake id and timestamp.
+2. Run stylometric + behavioral detection.
+3. Verify provenance and watermark signatures.
+4. Ingest into graph intelligence store.
+5. Persist case, audit log, and fingerprints.
+6. Emit SSE event for dashboards.
 
-Skill highlights
-- Modular pipeline architecture with clean separation of concerns.
-- Async-safe execution via run_in_threadpool.
-- Federation-aware sharing that can sync between nodes.
+### Sharing workflow
+- Fetch case data from local storage (or main node).
+- Build policy tags and prepare payload.
+- Generate sharing package with hop trace.
+- Optionally publish to federated ledger destination node.
 
-Libraries used
-- httpx, asyncio, uuid, datetime
+### Event streaming
+- Uses an asyncio Queue to deliver realtime events to SSE endpoints.
+- Drops oldest events if queue is full.
+
+## Integration Points
+- Detection engine, watermark engine, graph engine
+- Storage layer for cases and audit logs
+- Federated ledger for cross-node sharing
+
+## Dependencies
+- asyncio, httpx, uuid, datetime
 - fastapi.concurrency
